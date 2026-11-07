@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { HistoryIcon } from "@/components/icons";
+import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 
 export const instant = false;
@@ -27,38 +28,6 @@ type HistorySource = {
   similarity: number | null;
   document_title: string | null;
   document_version: number | null;
-};
-
-const OUTCOME_LABELS: Record<string, string> = {
-  answered: "Respondida",
-  rejected: "Rechazada",
-  blocked: "Bloqueada",
-  insufficient_evidence: "Evidencia insuficiente",
-  error: "Error",
-};
-
-const OUTCOME_TONES: Record<string, string> = {
-  answered: "admin-tag-ok",
-  rejected: "admin-tag-error",
-  blocked: "admin-tag-error",
-  insufficient_evidence: "admin-tag-warn",
-  error: "admin-tag-error",
-};
-
-const REASON_LABELS: Record<string, string> = {
-  no_authorized_sources: "No se encontraron fuentes autorizadas suficientes.",
-  model_abstained: "El modelo determinó que la evidencia era insuficiente.",
-  citation_validation_failed: "La respuesta no incluyó citas válidas.",
-  invalid_question: "La pregunta no cumplía el formato permitido.",
-  worker_not_configured: "El servicio de consulta no estaba configurado.",
-  embedding_failed: "Falló la generación del embedding.",
-  retrieval_failed: "Falló la recuperación documental.",
-  generation_failed: "Falló la generación de la respuesta.",
-  system_prompt_request: "Intento de acceder a instrucciones internas.",
-  secret_request: "Intento de acceder a secretos o credenciales.",
-  cross_group_request: "Intento de acceder a información de otro grupo.",
-  bulk_extraction: "Intento de extracción masiva de documentos.",
-  rate_limited: "Se superó el límite de consultas por minuto.",
 };
 
 export default async function HistoryPage() {

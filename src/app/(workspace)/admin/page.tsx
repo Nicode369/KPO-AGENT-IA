@@ -3,6 +3,7 @@ import { connection } from "next/server";
 
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups, getAdminInvitations, getAdminMembers } from "@/lib/admin/data";
+import { getSecurityAlertCount } from "@/lib/admin/security";
 
 export const instant = false;
 
@@ -10,9 +11,10 @@ export default async function AdminHomePage() {
   await connection();
   const { supabase, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
-  const [invitations, members] = await Promise.all([
+  const [invitations, members, securityAlerts] = await Promise.all([
     getAdminInvitations(supabase, groups),
     getAdminMembers(supabase, groups),
+    getSecurityAlertCount(isSuperadmin, adminGroupIds),
   ]);
   const now = new Date();
   const activeInvitations = invitations.filter(
@@ -41,6 +43,11 @@ export default async function AdminHomePage() {
           <span>Miembros activos</span>
           <strong>{activeMembers.length}</strong>
           <small>Roles y estados</small>
+        </Link>
+        <Link className="admin-stat" href="/admin/security">
+          <span>Alertas 24 h</span>
+          <strong>{securityAlerts ?? "—"}</strong>
+          <small>Bloqueos y rechazos</small>
         </Link>
       </section>
 

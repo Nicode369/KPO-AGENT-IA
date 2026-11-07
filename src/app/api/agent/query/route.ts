@@ -9,7 +9,11 @@ import {
   isAbstention,
   validateCitations,
 } from "@/lib/agent/prompt";
-import { classifyQuestion } from "@/lib/agent/security";
+import {
+  SECURITY_REFUSAL_TEXT,
+  classifyQuestion,
+  inspectAnswer,
+} from "@/lib/agent/security";
 import type {
   AgentOutcome,
   AgentQueryResponse,
@@ -125,28 +129,33 @@ export async function POST(request: Request) {
     return fail(429, "rate_limited", message);
   }
 
-  const blocked = classifyQuestion(question);
-  if (blocked) {
+  const security = classifyQuestion(question);
+  if (security) {
+    const outcome = security.action === "block" ? "blocked" : "rejected";
     const auditSaved = await recordQuery(supabase, {
       question,
-      answer: blocked.message,
+      answer: security.message,
       model: "none",
       promptVersion: null,
       abstained: true,
-      outcome: "blocked",
-      outcomeReason: blocked.code,
+      outcome,
+      outcomeReason: security.code,
       latencyMs: Date.now() - startedAt,
       groupIds,
       sources: [],
       groundingScore: null,
-      controls: { security_filter: true },
+      controls: {
+        security_filter: true,
+        security_action: security.action,
+        security_severity: security.severity,
+      },
     });
 
     return NextResponse.json({
-      answer: blocked.message,
+      answer: security.message,
       abstained: true,
-      outcome: "blocked",
-      outcomeReason: blocked.code,
+      outcome,
+      outcomeReason: security.code,
       sources: [],
       model: "none",
       latencyMs: Date.now() - startedAt,
@@ -296,6 +305,42 @@ export async function POST(request: Request) {
       controls: retrievalControls,
     });
     return chat.response;
+  }
+
+  const outputGuard = inspectAnswer(chat.answer);
+  if (outputGuard) {
+    const latencyMs = Date.now() - startedAt;
+    const auditSaved = await recordQuery(supabase, {
+      question,
+      answer: SECURITY_REFUSAL_TEXT,
+      model: chat.model,
+      promptVersion: PROMPT_VERSION,
+      abstained: true,
+      outcome: "blocked",
+      outcomeReason: `output_guard_${outputGuard.code}`,
+      latencyMs,
+      groupIds,
+      sources: [],
+      groundingScore: null,
+      controls: {
+        ...retrievalControls,
+        output_guard: true,
+        security_action: "block",
+        security_severity: "high",
+        output_guard_code: outputGuard.code,
+      },
+    });
+
+    return NextResponse.json({
+      answer: SECURITY_REFUSAL_TEXT,
+      abstained: true,
+      outcome: "blocked",
+      outcomeReason: `output_guard_${outputGuard.code}`,
+      sources: [],
+      model: chat.model,
+      latencyMs,
+      auditSaved,
+    } satisfies AgentQueryResponse);
   }
 
   const citationCheck = validateCitations(chat.answer, sources.length);

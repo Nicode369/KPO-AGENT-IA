@@ -203,8 +203,9 @@ Configurar en **Production** y, si se usan previews, en **Preview**:
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave publicable de Supabase |
 | `INGEST_WORKER_URL` | URL HTTPS del Worker |
 | `APP_ORIGIN` | `https://<dominio-produccion>` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave server-side para el panel de alertas de seguridad |
 
-`SUPABASE_SERVICE_ROLE_KEY` no es necesaria en Vercel para la app actual; si se añade, debe ser solo server-side y nunca con prefijo `NEXT_PUBLIC_`.
+`SUPABASE_SERVICE_ROLE_KEY` es necesaria para que `/admin/security` pueda leer eventos de todos los usuarios. Debe ser solo server-side y nunca llevar prefijo `NEXT_PUBLIC_`.
 
 No configurar tokens de Cloudflare en Vercel: el Worker se despliega aparte.
 

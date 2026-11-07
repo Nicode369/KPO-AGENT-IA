@@ -288,7 +288,7 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Público | Clave publicable para el cliente |
 | `APP_ORIGIN` | Servidor | Origen usado en redirects de Auth |
 | `INGEST_WORKER_URL` | Servidor | URL del Worker de ingesta y modelos |
-| `SUPABASE_SERVICE_ROLE_KEY` | Servidor | Solo scripts/bootstrap; nunca en el navegador |
+| `SUPABASE_SERVICE_ROLE_KEY` | Servidor | Panel de alertas de seguridad y scripts/bootstrap; nunca en el navegador |
 
 ### Worker de Cloudflare
 

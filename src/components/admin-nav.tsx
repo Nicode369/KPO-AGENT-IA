@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DashboardIcon, DocumentIcon, GroupsIcon, InvitationIcon, UsersIcon } from "@/components/icons";
+import {
+  DashboardIcon,
+  DocumentIcon,
+  GroupsIcon,
+  InvitationIcon,
+  ShieldIcon,
+  UsersIcon,
+} from "@/components/icons";
 
 const items = [
   { href: "/admin", label: "Resumen", icon: DashboardIcon, exact: true },
@@ -11,6 +18,7 @@ const items = [
   { href: "/admin/groups", label: "Grupos", icon: GroupsIcon, exact: false },
   { href: "/admin/invitations", label: "Invitaciones", icon: InvitationIcon, exact: false },
   { href: "/admin/users", label: "Usuarios", icon: UsersIcon, exact: false },
+  { href: "/admin/security", label: "Seguridad", icon: ShieldIcon, exact: false },
 ];
 
 export function AdminNav({ isSuperadmin }: { isSuperadmin: boolean }) {

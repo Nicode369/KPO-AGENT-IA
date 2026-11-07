@@ -71,5 +71,13 @@ test.describe("authenticated workspace", () => {
       page.getByRole("heading", { level: 1, name: "Fronteras de acceso" }),
     ).toBeVisible();
     await expectNoNextRuntimeError(page);
+
+    await page.goto("/admin/security");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Intentos bloqueados y rechazados" }),
+    ).toBeVisible();
+    await expect(page.getByText("Eventos en 24 h")).toBeVisible();
+    await expect(page.getByText("Alertas de seguridad no configuradas")).toHaveCount(0);
+    await expectNoNextRuntimeError(page);
   });
 });

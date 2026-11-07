@@ -461,6 +461,182 @@ button {
   font-weight: 600;
 }
 
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.capability-card,
+.security-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.capability-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--red-600);
+}
+
+.capability-card h3,
+.security-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.capability-card p,
+.security-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.workflow-list {
+  border-top: 1px solid var(--line-strong);
+}
+
+.workflow-step {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.workflow-number {
+  color: var(--red-700);
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.workflow-copy h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.workflow-copy p {
+  max-width: 72ch;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.example-card {
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.example-tag {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.example-tag::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  content: "";
+}
+
+.example-tag-ok {
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.example-tag-ok::before {
+  background: var(--red-500);
+}
+
+.example-tag-warn {
+  background: var(--surface-2);
+  color: var(--ink-soft);
+}
+
+.example-tag-warn::before {
+  background: var(--muted-2);
+}
+
+.example-tag-error {
+  background: var(--red-50);
+  color: var(--red-700);
+}
+
+.example-tag-error::before {
+  background: var(--red-500);
+}
+
+.example-question {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.example-detail {
+  margin: auto 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.progress-complete span {
+  background: var(--red-500);
+}
+
 .site-notice {
   display: flex;
   align-items: center;
@@ -2266,6 +2442,11 @@ button {
   .source-detail {
     display: none;
   }
+
+  .capability-grid,
+  .security-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -2288,6 +2469,10 @@ button {
   }
 
   .lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .example-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2362,6 +2547,19 @@ button {
 
   .site-section {
     padding: 44px 0;
+  }
+
+  .capability-grid,
+  .security-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-step {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .example-card {
+    min-height: 0;
   }
 
   .section-head {
