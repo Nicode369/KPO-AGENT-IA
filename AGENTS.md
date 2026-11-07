@@ -11,7 +11,20 @@ npm install
 npm run dev          # http://localhost:3000
 npm run lint
 npm run build        # next build --webpack
+npm test             # Vitest unit tests
+npm run test:e2e     # Playwright; requiere servidor y navegador instalado
 npm start -- -p 3101 # use when port 3000 is busy
+```
+
+Worker de ingesta (desde `workers/kpo-ingest/`):
+
+```bash
+npm install
+npm run typecheck
+npm test             # Vitest unit tests del chunker
+npm run dry-run      # valida el bundle sin desplegar
+npm run dev          # http://localhost:8787
+npm run deploy       # requiere npx wrangler login
 ```
 
 ## Stack
@@ -27,8 +40,18 @@ npm start -- -p 3101 # use when port 3000 is busy
 - `src/components/` — brand mark, SVG icons, auth frame, workspace shell, admin nav, invitation code input.
 - `src/lib/supabase/` — browser/server clients, env checks and session proxy.
 - `src/lib/auth/workspace.ts` — `requireUser`, `requireAdminUser`, role checks.
-- `src/lib/admin/data.ts` — admin queries and role labels.
+- `src/lib/admin/data.ts` — admin queries for groups, invitations and members.
+- `src/lib/admin/documents.ts` — document library/detail queries, signed URLs and labels.
+- `src/lib/agent/` — RAG prompt, citation validation, abstention, security classifier and response types.
+- `src/app/(workspace)/admin/documents/` — document list, detail, review forms and server actions.
+- `src/app/api/admin/documents/` — multipart proxies to the ingestion Worker.
+- `src/app/api/agent/query/` — authenticated RAG endpoint (embedding, retrieval, chat, audit).
+- `src/components/agent-console.tsx` — agent chat UI rendered in `/app`.
+- `src/app/(workspace)/app/history/page.tsx` — personal agent query history.
+- `scripts/ingest-base-drive.mjs` — batch ingestion of the `base_drive` folder; supports `--dry-run`.
+- `e2e/` — Playwright smoke tests. Install browsers with `npx playwright install chromium`.
 - `supabase/migrations/` — database source of truth. Apply in filename order.
+- `workers/kpo-ingest/` — Cloudflare Worker for phase 4/5 ingestion and model access (`/health`, `/embed-test`, `/embed`, `/chat`, `/ingest`, `/documents/:id/process`, `/documents/:id/versions`). Secrets live in `.dev.vars` locally and `wrangler secret` in production.
 
 ## Invitations
 
@@ -58,7 +81,12 @@ npm start -- -p 3101 # use when port 3000 is busy
 
 ## Current pending work
 
-- Apply `202611080001_short_invitation_codes.sql`, `202611090001_invitation_code_history.sql` and `202611090002_revoke_user_sessions.sql` to the remote Supabase project. The remote may have an older lowercase implementation of migration 3; migration 4 is compatible with existing 6- and 48-character hashes.
+- Migrations 6, 7 and 8 are applied remotely. Both private buckets, pgvector and the retrieval/audit RPCs exist.
+- Cloudflare is authenticated. The Worker runs locally on port 8787 and passes `typecheck`, `test`, `dry-run` and `/health`; it is not deployed yet.
+- `INGEST_WORKER_URL` is set in `.env.local` to the local Worker. `npm run ingest:base-drive` completed: 15 documents, 1185 chunks, all published as `common`.
+- OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.
+- The active `analyst` test account in the KPO group validated the non-superadmin agent flow.
+- Remaining: deploy the Worker with its secrets, move large OCR jobs off the request path, extend Playwright/E2E to analyst/group-admin flows, and complete deployment configuration (`APP_ORIGIN`, `INGEST_WORKER_URL`).
 - The app is local only; no deployment yet.
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. Configure custom SMTP before re-enabling verification for the final challenge.
 
@@ -66,7 +94,7 @@ npm start -- -p 3101 # use when port 3000 is busy
 
 - Never commit `.env.local` or secrets. Service-role key stays server-side.
 - Do not expose codes, hashes or user data in logs.
-- Keep changes small and verify with `npm run lint` and `npm run build`.
+- Keep changes small and verify with `npm run lint`, `npm run build`, `npm test`, and the Worker `typecheck`/`test`/`dry-run` when touching `workers/`.
 - `next dev` rewrites the Next.js block below; keep it in the file.
 
 <!-- BEGIN:nextjs-agent-rules -->
