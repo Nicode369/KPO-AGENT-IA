@@ -1,20 +1,24 @@
+import { connection } from "next/server";
+
 import { CopyCodeButton, CreateInvitationForm, RevokeInvitationForm } from "../admin-forms";
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups, getAdminInvitations, getDefaultInvitationExpiry, roleLabel } from "@/lib/admin/data";
 
 export const instant = false;
 
-function expiryLabel(expiresAt: string, revokedAt: string | null) {
+function expiryLabel(expiresAt: string, revokedAt: string | null, now: Date) {
   if (revokedAt) return "Revocada";
-  if (new Date(expiresAt) <= new Date()) return "Expirada";
+  if (new Date(expiresAt) <= now) return "Expirada";
   return "Vigente";
 }
 
 export default async function AdminInvitationsPage() {
+  await connection();
   const { supabase, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
   const invitations = await getAdminInvitations(supabase, groups);
-  const defaultExpiry = getDefaultInvitationExpiry();
+  const now = new Date();
+  const defaultExpiry = getDefaultInvitationExpiry(now);
 
   return (
     <main className="admin-content">
@@ -55,7 +59,11 @@ export default async function AdminInvitationsPage() {
               </thead>
               <tbody>
                 {invitations.map((invitation) => {
-                  const status = expiryLabel(invitation.expires_at, invitation.revoked_at);
+                  const status = expiryLabel(
+                    invitation.expires_at,
+                    invitation.revoked_at,
+                    now,
+                  );
                   return (
                     <tr key={invitation.invitation_id}>
                       <td>{invitation.group_name}</td>

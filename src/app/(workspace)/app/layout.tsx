@@ -14,7 +14,7 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
     memberships.some((membership) => membership.role === "group_admin");
 
   return (
-    <WorkspaceShell showAdmin={showAdmin} section="workspace">
+    <WorkspaceShell showAdmin={showAdmin}>
       {children}
     </WorkspaceShell>
   );

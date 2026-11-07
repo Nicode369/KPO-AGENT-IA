@@ -1,10 +1,12 @@
 import { CreateGroupForm } from "../admin-forms";
+import { connection } from "next/server";
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups } from "@/lib/admin/data";
 
 export const instant = false;
 
 export default async function AdminGroupsPage() {
+  await connection();
   const { supabase, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
 

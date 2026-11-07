@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DashboardIcon, GroupsIcon, InvitationIcon, UsersIcon } from "@/components/icons";
+import { DashboardIcon, DocumentIcon, GroupsIcon, InvitationIcon, UsersIcon } from "@/components/icons";
 
 const items = [
   { href: "/admin", label: "Resumen", icon: DashboardIcon, exact: true },
+  { href: "/admin/documents", label: "Documentos", icon: DocumentIcon, exact: false },
   { href: "/admin/groups", label: "Grupos", icon: GroupsIcon, exact: false },
   { href: "/admin/invitations", label: "Invitaciones", icon: InvitationIcon, exact: false },
   { href: "/admin/users", label: "Usuarios", icon: UsersIcon, exact: false },

@@ -46,8 +46,8 @@ export function roleLabel(role: AppRole) {
   return roleLabels[role];
 }
 
-export function getDefaultInvitationExpiry() {
-  const next = new Date();
+export function getDefaultInvitationExpiry(now: Date = new Date()) {
+  const next = new Date(now);
   next.setDate(next.getDate() + 365);
   return next.toISOString().slice(0, 10);
 }

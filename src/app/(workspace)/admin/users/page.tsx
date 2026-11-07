@@ -1,10 +1,12 @@
 import { MembershipForm, ProfileActiveForm, RevokeSessionsForm } from "../admin-forms";
+import { connection } from "next/server";
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups, getAdminMembers } from "@/lib/admin/data";
 
 export const instant = false;
 
 export default async function AdminUsersPage() {
+  await connection();
   const { supabase, userId, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
   const members = await getAdminMembers(supabase, groups);

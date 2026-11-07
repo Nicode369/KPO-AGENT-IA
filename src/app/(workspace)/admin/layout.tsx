@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const { isSuperadmin } = await requireAdminUser();
 
   return (
-    <WorkspaceShell showAdmin section="admin">
+    <WorkspaceShell showAdmin>
       <div className="admin-shell">
         <AdminNav isSuperadmin={isSuperadmin} />
         {children}

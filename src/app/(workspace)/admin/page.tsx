@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups, getAdminInvitations, getAdminMembers } from "@/lib/admin/data";
@@ -6,13 +7,18 @@ import { getAdminGroups, getAdminInvitations, getAdminMembers } from "@/lib/admi
 export const instant = false;
 
 export default async function AdminHomePage() {
+  await connection();
   const { supabase, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
   const [invitations, members] = await Promise.all([
     getAdminInvitations(supabase, groups),
     getAdminMembers(supabase, groups),
   ]);
-  const activeInvitations = invitations.filter((invitation) => !invitation.revoked_at && new Date(invitation.expires_at) > new Date());
+  const now = new Date();
+  const activeInvitations = invitations.filter(
+    (invitation) =>
+      !invitation.revoked_at && new Date(invitation.expires_at) > now,
+  );
   const activeMembers = members.filter((member) => member.status === "active");
 
   return (
@@ -42,7 +48,8 @@ export default async function AdminHomePage() {
         <h2>Acceso</h2>
         <p>No hay registro público. Cada persona debe usar un código de invitación vigente y un correo individual. El código queda ligado al grupo y al rol.</p>
         <div className="admin-actions">
-          <Link className="admin-button" href="/admin/invitations">Crear invitación</Link>
+          <Link className="admin-button" href="/admin/documents">Gestionar documentos</Link>
+          <Link className="admin-button admin-button-secondary" href="/admin/invitations">Crear invitación</Link>
           <Link className="admin-button admin-button-secondary" href="/admin/groups">Crear grupo</Link>
         </div>
       </section>
