@@ -22,6 +22,6 @@
     "CHUNK_MAX_CHARS": "1400",
     "CHUNK_OVERLAP_CHARS": "200",
     "OCR_MIN_TEXT_CHARS": "40",
-    "ALLOWED_ORIGINS": "http://localhost:3000"
+    "ALLOWED_ORIGINS": "https://kpo-agent-ai.vercel.app"
   }
 }
