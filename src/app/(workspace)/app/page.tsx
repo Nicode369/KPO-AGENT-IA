@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { connection } from "next/server";
+
+import { AgentConsole } from "@/components/agent-console";
 
 import { roleLabel } from "@/lib/admin/data";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
@@ -6,6 +9,7 @@ import { requireWorkspaceUser } from "@/lib/auth/workspace";
 export const instant = false;
 
 export default async function AppHomePage() {
+  await connection();
   const { supabase, profile, memberships } = await requireWorkspaceUser();
   const groupIds = memberships.map((membership) => membership.group_id);
   const { data: groups } = groupIds.length
@@ -20,8 +24,8 @@ export default async function AppHomePage() {
     <main className="signed-in-content">
       <h1>Bienvenido{profile.full_name ? `, ${profile.full_name}` : ""}.</h1>
       <p className="workspace-lead">
-        Tu sesión está activa. Los permisos y la biblioteca documental se conectarán en
-        las siguientes etapas.
+        Consulta la biblioteca documental de tus grupos. El asistente responde solo con
+        normas aprobadas y publicadas, y muestra la fuente de cada afirmación.
       </p>
 
       <section className="workspace-status" aria-label="Estado de la cuenta">
@@ -64,15 +68,18 @@ export default async function AppHomePage() {
         )}
       </section>
 
+      <AgentConsole />
+
       {showAdmin ? (
         <div className="workspace-actions">
           <Link className="button button-secondary" href="/admin">
             Administrar grupos, invitaciones y usuarios
           </Link>
+          <Link className="button button-secondary" href="/admin/documents">
+            Gestionar documentos
+          </Link>
         </div>
-      ) : (
-        <p className="workspace-footnote">La consulta documental aún no está habilitada.</p>
-      )}
+      ) : null}
     </main>
   );
 }
