@@ -270,6 +270,9 @@ async function handleChat(
       messages,
       max_tokens: maxTokens,
       temperature,
+      ...(model.startsWith("@cf/google/gemma-4-")
+        ? { chat_template_kwargs: { enable_thinking: false } }
+        : {}),
     });
   } catch (error) {
     console.error(
