@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kpo-ingest",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "AI_PROVIDER": "cloudflare",
+    "AI_EMBEDDING_MODEL": "@cf/baai/bge-m3",
+    "AI_CHAT_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+    "AI_OCR_MODEL": "@cf/mistralai/mistral-small-3.1-24b-instruct",
+    "SUPABASE_ORIGINAL_BUCKET": "documents-original",
+    "SUPABASE_PROCESSED_BUCKET": "documents-processed",
+    "MAX_UPLOAD_BYTES": "26214400",
+    "CHUNK_MAX_CHARS": "1400",
+    "CHUNK_OVERLAP_CHARS": "200",
+    "OCR_MIN_TEXT_CHARS": "40",
+    "ALLOWED_ORIGINS": "http://localhost:3000"
+  }
+}
