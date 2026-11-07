@@ -1,6 +1,6 @@
 # KPO Agent AI — Agent Guide
 
-Project memory lives in [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md). Read that first; this file is the quick operating guide.
+Project memory lives in [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md). Read that first; this file is the quick operating guide. Product overview: [`README.md`](README.md). Architecture and diagrams: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Deployment: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Commands
 

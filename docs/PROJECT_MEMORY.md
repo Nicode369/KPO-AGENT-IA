@@ -2,9 +2,17 @@
 
 Last updated: 2026-11-07. Keep this file current when architecture or pending work changes.
 
+## Documentation map
+
+- `README.md` — descripción del producto, inicio rápido, rutas, API, seguridad y estado.
+- `docs/ARCHITECTURE.md` — componentes, flujos, ERD, roles, API y decisiones técnicas.
+- `docs/DEPLOYMENT.md` — despliegue Vercel + Cloudflare + Supabase, smoke tests y rollback.
+- `docs/PROJECT_MEMORY.md` — este documento; estado operativo y memoria de mantenimiento.
+- `AGENTS.md` — comandos, rutas clave y reglas para agentes.
+
 ## Product
 
-Web app for document consultation in audit, accounting and compliance. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history.
+Web app for document consultation in audit, accounting and compliance. Phases 1–5 are implemented. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phases 6 (extended audit), 7 (simulator) and 8 (deployment) remain pending or partial.
 
 ## Routes
 
@@ -102,9 +110,9 @@ Apply in order:
 3. `202611080001_short_invitation_codes.sql` — 6-character uppercase codes and trigger support for 6/48-character codes.
 4. `202611090001_invitation_code_history.sql` — `code` column, code-aware `create_invitation`, code-aware `list_group_invitations`, and a replacement auth trigger. The trigger replacement keeps uppercase-hash creation and redemption consistent if migration 3 was applied partially.
 5. `202611090002_revoke_user_sessions.sql` — `profiles.sessions_revoked_at` and the superadmin-only `revoke_user_sessions` RPC.
-6. `202611100001_documents_and_ingestion.sql` — document tables, pgvector chunks, lifecycle RPCs, RLS, private buckets and storage policies. **Not applied remotely yet.**
-7. `202611110001_document_version_publication.sql` — `documents.published_version_id`, version-aware RLS, `publish_document` and `retire_document`. **Not applied remotely yet.**
-8. `202611110002_agent_retrieval.sql` — `agent_queries`, `agent_query_sources`, `match_document_chunks` and `record_agent_query`. **Not applied remotely yet.**
+6. `202611100001_documents_and_ingestion.sql` — document tables, pgvector chunks, lifecycle RPCs, RLS, private buckets and storage policies. Applied remotely and verified.
+7. `202611110001_document_version_publication.sql` — `documents.published_version_id`, version-aware RLS, `publish_document` and `retire_document`. Applied remotely and verified.
+8. `202611110002_agent_retrieval.sql` — `agent_queries`, `agent_query_sources`, `match_document_chunks` and `record_agent_query`. Applied remotely and verified.
 
 The remote project may have an older lowercase implementation of migration 3. Migration 4 accepts both uppercase and lowercase 6-character hashes, so reapplying it does not break existing invitations.
 
