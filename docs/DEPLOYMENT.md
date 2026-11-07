@@ -22,7 +22,7 @@ flowchart LR
 | App Next.js | Vercel | Pendiente |
 | Worker de ingesta/IA | Cloudflare | Pendiente |
 | Auth/Postgres/Storage | Supabase | Proyecto remoto con migraciones aplicadas |
-| Repositorio | GitHub privado | Pendiente de push/verificación |
+| Repositorio | GitHub privado | Push completado; confirmar visibilidad privada |
 
 ## 2. Preflight local
 
