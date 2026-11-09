@@ -98,11 +98,11 @@ npm run deploy       # requiere npx wrangler login
 - Superadmins use an active group stored in the `httpOnly` cookie `kpo_active_group`, resolved by `src/lib/auth/group-context.ts`. `/app` exposes the selector; agent queries are scoped to that group's published documents plus `common` and recorded with its `group_id`.
 - Dates are stored in UTC. Server-rendered UI and CSV exports use `America/Bogota`; date filters treat `from`/`to` as Colombian calendar days.
 - Cloudflare is authenticated. Worker `kpo-ingest` is deployed at `https://kpo-ingest.nicode.workers.dev` and responds `/health`.
-- `INGEST_WORKER_URL` is set in `.env.local`. The KPO corpus has 15 published documents (1,185 chunks) and BPO has 1 published document (97 chunks); both groups use `restricted` visibility. Run `npm run configure:groups -- --apply` for the KPO/BPO data setup.
+- `INGEST_WORKER_URL` is set in `.env.local`. The KPO corpus has 15 published documents (1,185 chunks), BPO has 1 (97 chunks) and the public demo group `compras-publicas` has 4 (324 chunks); all groups use `restricted` visibility. Run `npm run configure:groups -- --apply` for KPO/BPO and `npm run setup:demo -- --apply` for the demo group and accounts.
 - OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.
 - The active `analyst` test account in the KPO group validated the non-superadmin agent flow. The A/B test groups and their exclusive test account were removed; the `/admin/users` membership table now exposes superadmin-only account deletion.
-- Remaining: validate the simulator against the deployed app, extend Playwright/E2E to analyst/group-admin flows, and complete deployment configuration (`APP_ORIGIN`, `INGEST_WORKER_URL`).
-- The app is local only; no deployment yet.
+- Remaining: validate the simulator against the deployed app, extend Playwright/E2E to analyst/group-admin flows, and finish production smoke tests (`APP_ORIGIN`, `INGEST_WORKER_URL` are still local in `.env.local`).
+- The app is deployed at `https://kpo-agent-ai.vercel.app`; the Worker is deployed at `https://kpo-ingest.nicode.workers.dev`.
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. Configure custom SMTP before re-enabling verification for the final challenge.
 
 ## Rules

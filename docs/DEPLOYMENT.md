@@ -1,6 +1,6 @@
 # Despliegue — KPO Agent AI
 
-Guía para publicar la aplicación con **Vercel + Cloudflare Worker + Supabase**. El proyecto todavía no está desplegado; este documento describe el procedimiento previsto y las verificaciones necesarias.
+Guía para publicar la aplicación con **Vercel + Cloudflare Worker + Supabase**. La app está desplegada en Vercel y el Worker en Cloudflare; este documento describe el procedimiento y las verificaciones de cierre.
 
 ## 1. Arquitectura objetivo
 
@@ -19,8 +19,8 @@ flowchart LR
 
 | Componente | Plataforma | Estado |
 | --- | --- | --- |
-| App Next.js | Vercel | Pendiente |
-| Worker de ingesta/IA | Cloudflare | Pendiente |
+| App Next.js | Vercel | Desplegada: https://kpo-agent-ai.vercel.app |
+| Worker de ingesta/IA | Cloudflare | Desplegado: https://kpo-ingest.nicode.workers.dev |
 | Auth/Postgres/Storage | Supabase | Proyecto remoto con migraciones aplicadas |
 | Repositorio | GitHub privado | Push completado; confirmar visibilidad privada |
 
@@ -299,7 +299,7 @@ O desplegar la versión anterior del código.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
 - Rate limit no probado con carga real.
-- El corpus local de 16 documentos y 1.282 fragmentos no se versiona: KPO vive en `../base_drive/` y BPO se obtiene con `npm run configure:groups`.
+- El corpus de 20 documentos y 1.606 fragmentos no se versiona: KPO vive en `../base_drive/`, BPO se obtiene con `npm run configure:groups` y la demo con `npm run setup:demo -- --apply`.
 
 ## 10. Checklist final
 

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "configure:groups": "node --env-file=.env.local scripts/configure-groups.mjs"
+    "configure:groups": "node --env-file=.env.local scripts/configure-groups.mjs",
+    "setup:demo": "node --env-file=.env.local scripts/setup-demo.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

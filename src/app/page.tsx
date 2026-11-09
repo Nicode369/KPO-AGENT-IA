@@ -14,29 +14,29 @@ import {
 } from "@/components/icons";
 
 const corpus = {
-  documents: 15,
-  chunks: 1_185,
-  published: "7 nov 2026",
+  documents: 20,
+  chunks: 1_606,
+  published: "9 nov 2026",
 };
 
 const collections = [
   {
-    title: "Circulares y cumplimiento",
-    description: "Circulares externas y de cumplimiento para el contexto colombiano.",
-    detail: "10 documentos",
+    title: "KPO",
+    description: "Circulares, guías, marco contable y procedimientos de auditoría.",
+    detail: "15 documentos",
     icon: DocumentIcon,
   },
   {
-    title: "Guías y procedimientos",
-    description: "Auditoría, NIAs, COSO, SARLAFT/SAGRILAFT y reportes de operación sospechosa.",
-    detail: "4 documentos",
-    icon: ShieldIcon,
-  },
-  {
-    title: "Marco contable",
-    description: "Decreto 2420 de 2015 y normas de contabilidad, información financiera y aseguramiento.",
+    title: "BPO",
+    description: "Externalización de servicios de TIC y Business Process Outsourcing.",
     detail: "1 documento",
     icon: LibraryIcon,
+  },
+  {
+    title: "Compras públicas y transparencia",
+    description: "Contratación estatal, mínima cuantía, obra pública y datos abiertos del SECOP.",
+    detail: "4 documentos",
+    icon: ShieldIcon,
   },
 ];
 
@@ -372,9 +372,10 @@ export default function Home() {
                 <h3>Una nota sobre el corpus</h3>
               </div>
               <p>
-                El corpus publicado contiene {corpus.documents} documentos normativos y de
-                consulta. Un índice de metadatos y dos ejercicios del Bootcamp quedan fuera
-                de la búsqueda porque no son fuentes normativas.
+                El corpus publicado contiene {corpus.documents} documentos: 15 de KPO,
+                1 de BPO y 4 de la demo de compras públicas. El índice de metadatos y los
+                ejercicios del Bootcamp quedan fuera de la búsqueda porque no son fuentes
+                normativas.
               </p>
             </aside>
           </div>

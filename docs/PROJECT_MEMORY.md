@@ -1,6 +1,6 @@
 # Project memory — KPO Agent AI
 
-Last updated: 2026-11-08. Keep this file current when architecture or pending work changes.
+Last updated: 2026-11-09. Keep this file current when architecture or pending work changes.
 
 ## Documentation map
 
@@ -12,7 +12,7 @@ Last updated: 2026-11-08. Keep this file current when architecture or pending wo
 
 ## Product
 
-Web app for document consultation in audit, accounting and compliance. Phases 1–7 are implemented in local. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phase 6 adds an append-only `audit_events` hash chain (SHA-256), auth/admin/ciclo documental logging, group-scoped events viewer, integrity verifier, reports and protected CSV exports. Phase 7 adds simulator cases, batch runs against `runAgentQuery`, per-case metrics (outcome, source, terms, citations, latency) and isolation from real query history. Migrations 1–12 are applied in Supabase. Phase 8 (deployment) remains pending or partial.
+Web app for document consultation in audit, accounting and compliance. Phases 1–7 are implemented. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phase 6 adds an append-only `audit_events` hash chain (SHA-256), auth/admin/ciclo documental logging, group-scoped events viewer, integrity verifier, reports and protected CSV exports. Phase 7 adds simulator cases, batch runs against `runAgentQuery`, per-case metrics (outcome, source, terms, citations, latency) and isolation from real query history. Migrations 1–12 are applied in Supabase. Phase 8 is partial: the app is deployed on Vercel and the Worker on Cloudflare; smoke tests, backups and monitoring remain pending.
 
 ## Routes
 
@@ -54,7 +54,7 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - El endpoint del agente aplica un clasificador determinista contra extracción del prompt, secretos, acceso cruzado y extracción masiva; además limita a 20 consultas por minuto por usuario. Los bloqueos y errores también se registran.
 - Los errores de extracción dejan el documento y la versión en `error` con `processing_error`; se puede reprocesar o cargar otra versión.
 - Variables de modelo: `AI_EMBEDDING_MODEL`, `AI_CHAT_MODEL`, `AI_OCR_MODEL` (Mistral Small 3.1 por defecto) y `OCR_MIN_TEXT_CHARS` en `wrangler.jsonc`. Secretos del Worker: `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`, en `.dev.vars` local y `wrangler secret` en producción.
-- Estado: `typecheck`, tests, `dry-run`, `npm run build` y `GET /health` verificados en local. Cloudflare está autenticado y el Worker corre localmente en el puerto 8787; todavía no está desplegado.
+- Estado: `typecheck`, tests, `dry-run`, `npm run build` y `GET /health` verificados. Cloudflare está autenticado y el Worker está desplegado en `https://kpo-ingest.nicode.workers.dev`; localmente puede correr en el puerto 8787.
 
 ## Design tokens
 
@@ -203,8 +203,8 @@ Do not commit test users, invitations, screenshots or credentials.
 - `INGEST_WORKER_URL` está configurado en `.env.local`; en producción debe apuntar al Worker desplegado.
 - La migración 5 está aplicada en remoto. Verificar en el Dashboard que `create_invitation` use códigos de 6 caracteres y vigencia de 365 días (migraciones 3 y 4).
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. If email verification is required for the final challenge, configure a custom SMTP provider and re-enable it; the trigger already leaves memberships pending until confirmation.
-- No deployment yet; `APP_ORIGIN` must match the deployed URL.
-- Fases 4 y 5 están implementadas y validadas en local: 16 documentos y 1.282 fragmentos, todos `published`; KPO conserva 15 documentos y BPO tiene 1, ambos grupos con visibilidad `restricted`. El agente respondió con citas versionadas, se abstuvo sin evidencia y bloqueó extracción del prompt.
+- App deployed at `https://kpo-agent-ai.vercel.app`; production `APP_ORIGIN` must match that URL. The local `.env.local` still points to localhost.
+- Fases 4 y 5 están implementadas y validadas: 20 documentos y 1.606 fragmentos, todos `published`; KPO conserva 15 documentos, BPO tiene 1 y la demo pública de compras públicas tiene 4, todos con visibilidad `restricted`. El agente respondió con citas versionadas, se abstuvo sin evidencia y bloqueó extracción del prompt.
 - El Worker procesa en línea dentro del request de Next (`maxDuration = 60`) y el proxy de Next puede limitar cuerpos grandes (~4.5 MB en Vercel). Un PDF escaneado muy grande puede agotar el tiempo; si ocurre, mover el procesamiento a una cola o ejecutar la ingesta desde el script con el Worker desplegado.
 - El OCR de PDF escaneados quedó validado con `Circular Externa 100-000015` usando Mistral Small 3.1; el agente citó el artículo 631-5. El OCR de DOCX con imágenes no está implementado.
 - La cuenta `analyst` de prueba del grupo KPO validó el acceso de un usuario no superadministrador a los documentos de su grupo. Los grupos de prueba A/B se eliminaron y sus cuentas exclusivas se borraron; la tabla de miembros de `/admin/users` permite al superadmin eliminar cuentas permanentemente. El grupo BPO se creó con el paper IESE OP-08-02 como único documento.

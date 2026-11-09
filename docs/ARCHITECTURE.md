@@ -89,7 +89,7 @@ flowchart TB
   S1 --> S2
 ```
 
-Estado actual: app y Worker validados en local; despliegue público pendiente. La guía operativa está en [`DEPLOYMENT.md`](DEPLOYMENT.md).
+Estado actual: app desplegada en Vercel y Worker desplegado en Cloudflare; pendientes smoke tests y operación. La guía operativa está en [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## 4. Flujo de autenticación y registro por invitación
 
@@ -502,7 +502,7 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 - Fases 1–7 implementadas en local.
 - Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9, 10 y 11 aplicadas.
 - Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 aplicada.
-- Fase 8 en preparación: despliegue Vercel + Cloudflare + Supabase.
-- El corpus de validación local tiene 16 documentos y 1.282 fragmentos: 15 en KPO y 1 en BPO, todos publicados como `restricted`. El corpus KPO no se versiona en Git.
+- Fase 8 parcial: app en Vercel, Worker en Cloudflare y Supabase remoto; faltan smoke tests, backups y monitoreo.
+- El corpus de validación tiene 20 documentos y 1.606 fragmentos: 15 en KPO, 1 en BPO y 4 en la demo de compras públicas, todos publicados como `restricted`. El corpus KPO no se versiona en Git.
 
 Consulta [`../README.md`](../README.md) para uso, [`DEPLOYMENT.md`](DEPLOYMENT.md) para publicación y [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) para el estado detallado.

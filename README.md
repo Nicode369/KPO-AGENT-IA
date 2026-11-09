@@ -57,9 +57,9 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
 | 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9, 10 y 11 aplicadas y verificadas |
 | 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
-| 8 | Integración y despliegue | 🚧 En preparación: Worker desplegado; falta confirmar Vercel y configurar Auth/redirects |
+| 8 | Integración y despliegue | ✅ App en Vercel y Worker desplegados; pendientes smoke tests de Auth/redirects, backups y monitoreo |
 
-El repositorio incluye una validación local con **16 documentos y 1.282 fragmentos**: 15 en KPO y 1 en BPO, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups`.
+El repositorio incluye una validación con **20 documentos y 1.606 fragmentos**: 15 en KPO, 1 en BPO y 4 en la demo de compras públicas, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups` y el corpus demo con `npm run setup:demo -- --apply`.
 
 ## Capacidades
 
@@ -193,6 +193,7 @@ Los diagramas de secuencia, el modelo entidad-relación completo y la topología
 ├── workers/kpo-ingest/             # Worker de ingesta, OCR y modelos
 ├── scripts/ingest-base-drive.mjs   # ingesta masiva local
 ├── scripts/configure-groups.mjs    # reconfiguración KPO/BPO, sin A/B
+├── scripts/setup-demo.mjs          # grupo, cuentas y corpus demo de compras públicas
 ├── e2e/                            # Playwright
 ├── docs/                           # arquitectura, despliegue y memoria
 └── public/                         # activos estáticos
@@ -291,6 +292,16 @@ npm run configure:groups -- --apply
 ```
 
 El script requiere `SUPABASE_SERVICE_ROLE_KEY` para borrar los grupos/cuentas de prueba y `INGEST_WORKER_URL` accesible para ingestar el PDF de BPO. La cuenta `INGEST_EMAIL` debe ser superadministradora.
+
+Para crear o actualizar la demo de portafolio (grupo `compras-publicas`, cuentas demo y 4 PDFs públicos), ejecuta:
+
+```bash
+npm run setup:demo           # dry-run
+npm run setup:demo -- --apply
+npm run setup:demo -- --apply --rotate  # rota contraseñas
+```
+
+Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git.
 
 ### 7. Confirmación de correo
 
@@ -491,7 +502,7 @@ Arquitectura objetivo:
 - **Cloudflare Worker** para ingesta y modelos.
 - **Supabase** para Auth, Postgres, pgvector y Storage.
 
-El proyecto **todavía no está desplegado**. La guía completa, variables, secretos, redirect URLs, smoke tests y rollback están en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+La app está desplegada en `https://kpo-agent-ai.vercel.app` y el Worker en `https://kpo-ingest.nicode.workers.dev`. La guía completa, variables, secretos, redirect URLs, smoke tests y rollback están en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 Resumen:
 
@@ -506,21 +517,21 @@ Resumen:
 ## Limitaciones conocidas
 
 - **Sin backfill de auditoría:** la migración 9 no reconstruye eventos anteriores; la cadena empieza a registrar desde su aplicación.
-- **Sin despliegue todavía:** no hay URL pública; `APP_ORIGIN` e `INGEST_WORKER_URL` apuntan a local.
+- **Despliegue sin cierre operativo:** la app está en Vercel, pero faltan smoke tests completos, backups y monitoreo; `.env.local` sigue apuntando a local.
 - **OCR síncrono:** el procesamiento ocurre dentro del request; `maxDuration = 60` puede ser insuficiente para PDFs muy grandes.
 - **Límite de Vercel:** el proxy multipart puede limitar cuerpos grandes (~4.5 MB). El corpus actual está por debajo; para documentos mayores conviene cola o carga directa.
 - **Sin SMTP propio:** confirmación de correo desactivada; recuperación de contraseña por correo no fiable.
 - **Rate limit no probado bajo carga real.**
 - **OCR de imágenes embebidas en DOCX no implementado.**
 - **Supervisor sin panel de seguimiento dedicado:** puede ejecutar el simulador y consultar sus resultados, pero no gestiona casos ni miembros.
-- **Datos de validación locales:** los 16 documentos y 1.282 fragmentos no forman parte del repo; KPO vive en `../base_drive/` y BPO se descarga desde el IESE.
+- **Datos de validación:** los 20 documentos y 1.606 fragmentos no forman parte del repo; KPO vive en `../base_drive/`, BPO se descarga desde el IESE y la demo usa PDFs públicos de Colombia Compra Eficiente.
 - **Integración de proveedor de IA:** la capa está separada en el Worker, pero cambiar de proveedor requiere adaptar `workers/kpo-ingest/src`.
 
 ## Fases pendientes
 
 1. **Fase 6 — Auditoría y trazabilidad:** completada (cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV); migraciones 9, 10 y 11 aplicadas y cadena verificada.
 2. **Fase 7 — Simulador:** implementada con tablas `simulator_cases`, `simulator_runs`, `simulator_results`, reutilización de `runAgentQuery`, UI `/app/simulator`, métricas de acierto/abstención/citas/términos/latencia y ejecución por lotes. Migración 12 aplicada; el simulador usa documentos publicados propios y comunes del grupo.
-3. **Fase 8 — Cierre:** desplegar Worker y app, configurar Auth/redirects, backups, monitoreo, smoke tests y documentación final.
+3. **Fase 8 — Cierre:** app y Worker desplegados; completar smoke tests de Auth/redirects, backups, monitoreo y documentación final.
 4. **Mejoras operativas:** mover OCR a cola, probar rate limit con carga, añadir SMTP si se requiere verificación real y ampliar E2E a flujos de grupo.
 
 ## Documentación

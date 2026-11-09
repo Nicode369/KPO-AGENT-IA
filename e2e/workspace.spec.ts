@@ -69,9 +69,9 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText(/Decreto 2420/).first()).toBeVisible();
     await expect(page.getByText(/Circular Externa 100-000015/).first()).toBeVisible();
-    await expect(
-      page.locator(".admin-stat", { hasText: "Fragmentos indexados" }),
-    ).not.toContainText("0");
+    const indexed = page.locator(".admin-stat", { hasText: "Fragmentos indexados" });
+    const indexedCount = Number((await indexed.innerText()).replace(/\D/g, ""));
+    expect(indexedCount).toBeGreaterThan(0);
     await expectNoNextRuntimeError(page);
 
     await page.goto("/admin/users");
