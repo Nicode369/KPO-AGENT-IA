@@ -3,13 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { HistoryIcon, LibraryIcon, ShieldIcon } from "@/components/icons";
+import { HistoryIcon, LibraryIcon, ReportIcon, ShieldIcon } from "@/components/icons";
 
-export function WorkspaceNav({ showAdmin }: { showAdmin: boolean }) {
+export function WorkspaceNav({
+  showAdmin,
+  showSimulator,
+}: {
+  showAdmin: boolean;
+  showSimulator: boolean;
+}) {
   const pathname = usePathname();
   const isWorkspace = pathname === "/app";
   const isHistory = pathname.startsWith("/app/history");
   const isAdmin = pathname.startsWith("/admin");
+  const isSimulator = pathname.startsWith("/app/simulator");
 
   return (
     <nav className="signed-in-nav" aria-label="Navegación principal">
@@ -29,6 +36,16 @@ export function WorkspaceNav({ showAdmin }: { showAdmin: boolean }) {
         <HistoryIcon size={16} />
         Historial
       </Link>
+      {showSimulator ? (
+        <Link
+          className={isSimulator ? "active" : undefined}
+          href="/app/simulator"
+          aria-current={isSimulator ? "page" : undefined}
+        >
+          <ReportIcon size={16} />
+          Simulador
+        </Link>
+      ) : null}
       {showAdmin ? (
         <Link
           className={isAdmin ? "active" : undefined}

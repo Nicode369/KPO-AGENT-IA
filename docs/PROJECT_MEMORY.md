@@ -12,7 +12,7 @@ Last updated: 2026-11-08. Keep this file current when architecture or pending wo
 
 ## Product
 
-Web app for document consultation in audit, accounting and compliance. Phases 1–6 are implemented in local. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phase 6 adds an append-only `audit_events` hash chain (SHA-256), auth/admin/ciclo documental logging, group-scoped events viewer, integrity verifier, reports and protected CSV exports. Migration 9 is applied and verified in Supabase. Phase 7 (simulator) and Phase 8 (deployment) remain pending or partial.
+Web app for document consultation in audit, accounting and compliance. Phases 1–7 are implemented in local. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phase 6 adds an append-only `audit_events` hash chain (SHA-256), auth/admin/ciclo documental logging, group-scoped events viewer, integrity verifier, reports and protected CSV exports. Phase 7 adds simulator cases, batch runs against `runAgentQuery`, per-case metrics (outcome, source, terms, citations, latency) and isolation from real query history. Migrations 1–11 are applied in Supabase; migration 12 (`simulator.sql`) is pending. Phase 8 (deployment) remains pending or partial.
 
 ## Routes
 
@@ -20,6 +20,8 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` — public auth.
 - `/app` — signed-in dashboard and document agent. Requires an active profile and membership (or superadmin).
 - `/app/history` — personal query history with outcome, model, latency, grounding and sources.
+- `/app/simulator` — simulator for superadmins, group admins and supervisors: cases, batch execution and metrics.
+- `/api/simulator/run` — `start`, `case` and `finish` actions; reuses `runAgentQuery` with history and rate limit disabled.
 - `/admin`, `/admin/groups`, `/admin/invitations`, `/admin/users` — access administration.
 - `/admin/audit` — global query history for superadmins and group-scoped history for `group_admin`, read with the service role and group filters.
 - `/admin/audit/events` — append-only audit events with hash chain, filters, page size 25, CSV export and manual integrity verification.
@@ -121,7 +123,8 @@ Apply in order:
 8. `202611110002_agent_retrieval.sql` — `agent_queries`, `agent_query_sources`, `match_document_chunks` and `record_agent_query`. Applied remotely and verified.
 9. `202611120001_audit_events_chain.sql` — append-only `audit_events`, SHA-256 hash chain, `append_audit_event`, `verify_audit_chain`, RLS/grants and triggers for profiles, groups, invitations, redemptions, memberships and document events. Applied remotely; the chain starts empty because historical events are not backfilled.
 10. `202611120002_audit_events_immutable_refs.sql` — applied and verified. Drops the mutable `on delete set null` FKs on `audit_events.actor_id` and `audit_events.group_id` and restores the original `group_id`/`actor_id` values where they were nulled, so previously hashed events verify again.
-11. `202611120003_agent_out_of_scope.sql` — **pending to apply.** Adds `out_of_scope` to the `agent_queries` outcome constraint and migrates legacy `insufficient_evidence` rows without relevant sources.
+11. `202611120003_agent_out_of_scope.sql` — applied. Adds `out_of_scope` to the `agent_queries` outcome constraint and migrates legacy `insufficient_evidence` rows without relevant sources.
+12. `202611120004_simulator.sql` — **pending to apply.** Creates `simulator_cases`, `simulator_runs` and `simulator_results` with group-scoped RLS, manager/runner helpers and unique run/case results.
 
 The remote project may have an older lowercase implementation of migration 3. Migration 4 accepts both uppercase and lowercase 6-character hashes, so reapplying it does not break existing invitations.
 
@@ -189,12 +192,14 @@ Do not commit test users, invitations, screenshots or credentials.
 - Migraciones 6, 7 y 8 aplicadas en Supabase; tablas, RPCs, pgvector y buckets privados verificados.
 - La migración 9 (`audit_events_chain`) está aplicada. La cadena arranca vacía: no hay backfill de eventos anteriores.
 - La migración 10 (`audit_events_immutable_refs`) está aplicada y verificada: eliminó las FKs `on delete set null` que alteraban `actor_id`/`group_id` ya incluidos en el hash y reparó los eventos afectados. La cadena verificó `is_valid: true`.
-- La migración 11 (`agent_out_of_scope`) está pendiente: amplía el check de outcomes y migra consultas históricas sin fuentes relevantes.
+- La migración 11 (`agent_out_of_scope`) está aplicada: amplía el check de outcomes y migró consultas históricas sin fuentes relevantes.
+- La migración 12 (`simulator.sql`) está pendiente: crea las tablas y políticas del simulador. Hasta aplicarla, `/app/simulator` muestra el aviso de migración faltante.
 - La fase 6 está completa: cadena SHA-256, logging de auth/admin/exportaciones, visor de eventos, verificador y reportes. Los triggers se validaron creando/desactivando/borrando un grupo temporal.
+- La fase 7 está implementada en local: `/app/simulator` permite gestionar casos (superadmin/group_admin), ejecutarlos por lotes (también supervisor) y ver métricas sin escribir en `agent_queries`.
 - El agente distingue `out_of_scope` (sin fuentes publicadas relevantes) de `insufficient_evidence` (hay fuentes, pero el modelo se abstiene o no cita).
 - Las fechas se guardan en UTC; UI y CSV muestran `America/Bogota`, y los filtros por día usan el calendario colombiano.
-- Cloudflare autenticado; el Worker corre localmente y pasó `typecheck`, tests, `dry-run` y `/health`. Falta desplegarlo con `npm run deploy`.
-- `INGEST_WORKER_URL` está configurado en `.env.local` apuntando al Worker local. En producción debe apuntar al Worker desplegado.
+- Cloudflare autenticado; el Worker `kpo-ingest` está desplegado en `https://kpo-ingest.nicode.workers.dev` y responde `/health`.
+- `INGEST_WORKER_URL` está configurado en `.env.local`; en producción debe apuntar al Worker desplegado.
 - La migración 5 está aplicada en remoto. Verificar en el Dashboard que `create_invitation` use códigos de 6 caracteres y vigencia de 365 días (migraciones 3 y 4).
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. If email verification is required for the final challenge, configure a custom SMTP provider and re-enable it; the trigger already leaves memberships pending until confirmation.
 - No deployment yet; `APP_ORIGIN` must match the deployed URL.

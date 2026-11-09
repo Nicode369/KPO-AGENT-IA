@@ -8,9 +8,11 @@ import { WorkspaceNav } from "@/components/workspace-nav";
 export function WorkspaceShell({
   children,
   showAdmin = false,
+  showSimulator = false,
 }: {
   children: ReactNode;
   showAdmin?: boolean;
+  showSimulator?: boolean;
 }) {
   return (
     <div className="signed-in-shell">
@@ -20,7 +22,7 @@ export function WorkspaceShell({
             <BrandMark />
             <span className="signed-in-brand-text">KPO <i>/</i> AGENT</span>
           </Link>
-          <WorkspaceNav showAdmin={showAdmin} />
+          <WorkspaceNav showAdmin={showAdmin} showSimulator={showSimulator} />
           <div className="signed-in-actions">
             <span className="session-label">Sesión individual</span>
             <form action={signOut}><button className="link-button" type="submit">Cerrar sesión</button></form>

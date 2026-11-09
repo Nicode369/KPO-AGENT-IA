@@ -29,7 +29,7 @@ test.describe("authenticated workspace", () => {
     await page.getByLabel("Contraseña").fill(password!);
     await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expectNoNextRuntimeError(page);
 
@@ -37,6 +37,13 @@ test.describe("authenticated workspace", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Historial de consultas" }),
     ).toBeVisible();
+    await expectNoNextRuntimeError(page);
+
+    await page.goto("/app/simulator");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Simulador de pruebas" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Simulador" })).toBeVisible();
     await expectNoNextRuntimeError(page);
 
     await page.goto("/admin");

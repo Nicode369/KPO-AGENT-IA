@@ -55,8 +55,8 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 3 | Base de datos, Auth, invitaciones, roles y RLS | ✅ Completada |
 | 4 | Gestión documental, OCR, publicación y versionado | ✅ Completada en local |
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
-| 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9 y 10 aplicadas y verificadas |
-| 7 | Simulador de pruebas | ⏳ Pendiente |
+| 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9, 10 y 11 aplicadas y verificadas |
+| 7 | Simulador de pruebas | ✅ Implementada en local: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 pendiente de aplicar |
 | 8 | Integración y despliegue | 🚧 En preparación: código y documentación listos; falta publicar Worker, Vercel y configurar Auth/redirects |
 
 El repositorio incluye una validación local con **15 documentos, 1.185 fragmentos, todos publicados como `common`**. Ese corpus no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`.
@@ -336,8 +336,9 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | 9 | `202611120001_audit_events_chain.sql` | `audit_events` append-only, cadena SHA-256, `append_audit_event`, `verify_audit_chain` y disparadores |
 | 10 | `202611120002_audit_events_immutable_refs.sql` | Elimina las FKs mutables de `audit_events` y repara eventos afectados por borrados |
 | 11 | `202611120003_agent_out_of_scope.sql` | Añade el resultado `out_of_scope` y migra consultas sin fuentes relevantes |
+| 12 | `202611120004_simulator.sql` | Casos, ejecuciones y resultados del simulador con RLS por grupo |
 
-Las migraciones 1–10 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);` y la 10 dejó la cadena íntegra. La migración 11 está **pendiente de aplicar** y es necesaria antes de desplegar el nuevo resultado `out_of_scope`. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
+Las migraciones 1–11 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra y la 11 habilitó `out_of_scope`. La migración 12 (`simulator.sql`) está **pendiente de aplicar** y es necesaria antes de usar el simulador en remoto. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
 
 ## Rutas de la aplicación
 
@@ -347,6 +348,7 @@ Las migraciones 1–10 están aplicadas en el proyecto remoto usado durante el d
 | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | Público | Flujos de autenticación |
 | `/app` | Usuario activo | Dashboard y consola del agente |
 | `/app/history` | Usuario activo | Historial personal de consultas |
+| `/app/simulator` | Superadmin / `group_admin` / `supervisor` | Casos, ejecución y métricas del simulador |
 | `/admin` | Superadmin / `group_admin` | Resumen administrativo |
 | `/admin/groups` | Superadmin | Crear y listar grupos |
 | `/admin/invitations` | Superadmin / `group_admin` | Generar, copiar y revocar invitaciones |
@@ -359,6 +361,7 @@ Las migraciones 1–10 están aplicadas en el proyecto remoto usado durante el d
 | `/admin/security` | Superadmin / `group_admin` | Intentos bloqueados y rechazados |
 | `/api/admin/audit/export` | Admin | Descarga CSV de consultas o eventos |
 | `/api/agent/query` | Usuario activo | Consulta RAG |
+| `/api/simulator/run` | Superadmin / `group_admin` / `supervisor` | Inicio, ejecución por caso y cierre de lotes |
 | `/api/admin/documents/upload` | Superadmin / `group_admin` | Proxy multipart al Worker |
 | `/api/admin/documents/[id]/versions` | Superadmin / `group_admin` | Nueva versión |
 | `/auth/callback` | Público | Intercambio de código de Auth |
@@ -382,6 +385,7 @@ Las migraciones 1–10 están aplicadas en el proyecto remoto usado durante el d
 | Método | Endpoint | Auth | Función |
 | --- | --- | --- | --- |
 | `POST` | `/api/agent/query` | Sesión activa | Clasificación, rate limit, RAG, citas y auditoría |
+| `POST` | `/api/simulator/run` | Simulador | `start`, `case` y `finish` de un lote contra `runAgentQuery` |
 | `POST` | `/api/admin/documents/upload` | Admin | Reenvía multipart al Worker |
 | `POST` | `/api/admin/documents/[id]/versions` | Admin | Reenvía nueva versión al Worker |
 | `GET` | `/api/admin/audit/export` | Admin | CSV de consultas o eventos; registra `audit_export` |
@@ -426,9 +430,9 @@ erDiagram
 | Historial de consultas administrativo | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Eventos auditados, reportes y exportación CSV | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Verificar cadena de auditoría | ✅ | ✅ | ❌ | ❌ |
-| Simulador | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
+| Simulador | ✅ Gestionar y ejecutar | ✅ Su grupo | ✅ Ejecutar | ❌ |
 
-Hoy `supervisor` y `analyst` comparten el acceso de consulta. El seguimiento ampliado del supervisor y la ejecución de pruebas llegarán con la fase 7.
+`supervisor` puede ejecutar casos y consultar resultados de sus grupos; `group_admin` y `superadmin` además crean, editan y eliminan casos. `analyst` no accede al simulador.
 
 ## Seguridad
 
@@ -488,23 +492,22 @@ Resumen:
 
 ## Limitaciones conocidas
 
-- **Migración 10 pendiente:** corrige las FKs mutables de `audit_events` y repara la cadena tras borrar grupos; debe aplicarse antes de desplegar.
 - **Sin backfill de auditoría:** la migración 9 no reconstruye eventos anteriores; la cadena empieza a registrar desde su aplicación.
-- **Fase 7 pendiente:** falta el simulador de pruebas.
+- **Migración 12 pendiente:** crea las tablas del simulador; debe aplicarse antes de usar `/app/simulator` en remoto.
 - **Sin despliegue todavía:** no hay URL pública; `APP_ORIGIN` e `INGEST_WORKER_URL` apuntan a local.
 - **OCR síncrono:** el procesamiento ocurre dentro del request; `maxDuration = 60` puede ser insuficiente para PDFs muy grandes.
 - **Límite de Vercel:** el proxy multipart puede limitar cuerpos grandes (~4.5 MB). El corpus actual está por debajo; para documentos mayores conviene cola o carga directa.
 - **Sin SMTP propio:** confirmación de correo desactivada; recuperación de contraseña por correo no fiable.
 - **Rate limit no probado bajo carga real.**
 - **OCR de imágenes embebidas en DOCX no implementado.**
-- **Supervisor sin flujo propio:** hoy consulta como analyst; seguimiento y pruebas quedan para fases 6/7.
+- **Supervisor sin panel de seguimiento dedicado:** puede ejecutar el simulador y consultar sus resultados, pero no gestiona casos ni miembros.
 - **Datos de validación locales:** los 15 documentos y 1.185 fragmentos no forman parte del repo.
 - **Integración de proveedor de IA:** la capa está separada en el Worker, pero cambiar de proveedor requiere adaptar `workers/kpo-ingest/src`.
 
 ## Fases pendientes
 
-1. **Fase 6 — Auditoría y trazabilidad:** completada (cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV); migraciones 9 y 10 aplicadas y cadena verificada. La migración 11 añade `out_of_scope` y queda pendiente de aplicar.
-2. **Fase 7 — Simulador:** tablas `simulator_cases`, `simulator_runs`, `simulator_results`; reutilización de `runAgentQuery`; UI `/admin/simulator`; métricas de acierto, abstención, citas y latencia; ejecución por lotes.
+1. **Fase 6 — Auditoría y trazabilidad:** completada (cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV); migraciones 9, 10 y 11 aplicadas y cadena verificada.
+2. **Fase 7 — Simulador:** implementada en local con tablas `simulator_cases`, `simulator_runs`, `simulator_results`, reutilización de `runAgentQuery`, UI `/app/simulator`, métricas de acierto/abstención/citas/términos/latencia y ejecución por lotes. Falta aplicar la migración 12 en Supabase.
 3. **Fase 8 — Cierre:** desplegar Worker y app, configurar Auth/redirects, backups, monitoreo, smoke tests y documentación final.
 4. **Mejoras operativas:** mover OCR a cola, probar rate limit con carga, añadir SMTP si se requiere verificación real y ampliar E2E a flujos de grupo.
 

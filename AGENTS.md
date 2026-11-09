@@ -91,14 +91,16 @@ npm run deploy       # requiere npx wrangler login
 
 - Migrations 6, 7 and 8 are applied remotely. Both private buckets, pgvector and the retrieval/audit RPCs exist.
 - Migrations 9 (`202611120001_audit_events_chain.sql`) and 10 (`202611120002_audit_events_immutable_refs.sql`) are applied remotely. The chain verifies clean after removing the mutable `on delete set null` FKs.
-- Migration 11 (`202611120003_agent_out_of_scope.sql`) is **pending to apply**: it adds `out_of_scope` to the `agent_queries` outcome constraint and migrates legacy rows without relevant sources.
+- Migration 11 (`202611120003_agent_out_of_scope.sql`) is applied: it added `out_of_scope` to the `agent_queries` outcome constraint and migrated legacy rows without relevant sources.
+- Migration 12 (`202611120004_simulator.sql`) is **pending to apply**: simulator tables, RLS and manager/runner helpers.
 - Phase 6 is complete: hash-chained `audit_events`, auth/admin/export logging, event viewer, integrity verifier, reports and CSV export. E2E covers the events/reports pages and CSV export.
+- Phase 7 is implemented in local: `src/app/(workspace)/app/simulator/`, `src/app/api/simulator/run/route.ts`, `src/lib/simulator/` and `src/lib/auth/simulator.ts`. Superadmins/group admins manage cases; supervisors run them; results stay out of `agent_queries`.
 - Dates are stored in UTC. Server-rendered UI and CSV exports use `America/Bogota`; date filters treat `from`/`to` as Colombian calendar days.
-- Cloudflare is authenticated. The Worker runs locally on port 8787 and passes `typecheck`, `test`, `dry-run` and `/health`; it is not deployed yet.
-- `INGEST_WORKER_URL` is set in `.env.local` to the local Worker. `npm run ingest:base-drive` completed: 15 documents, 1185 chunks, all published as `common`.
+- Cloudflare is authenticated. Worker `kpo-ingest` is deployed at `https://kpo-ingest.nicode.workers.dev` and responds `/health`.
+- `INGEST_WORKER_URL` is set in `.env.local`. `npm run ingest:base-drive` completed: 15 documents, 1185 chunks, all published as `common`.
 - OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.
 - The active `analyst` test account in the KPO group validated the non-superadmin agent flow.
-- Remaining: deploy the Worker with its secrets, move large OCR jobs off the request path, extend Playwright/E2E to analyst/group-admin flows, and complete deployment configuration (`APP_ORIGIN`, `INGEST_WORKER_URL`).
+- Remaining: apply migration 12, validate the simulator against the live Supabase project, extend Playwright/E2E to analyst/group-admin flows, and complete deployment configuration (`APP_ORIGIN`, `INGEST_WORKER_URL`).
 - The app is local only; no deployment yet.
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. Configure custom SMTP before re-enabling verification for the final challenge.
 

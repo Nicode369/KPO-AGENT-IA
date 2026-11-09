@@ -41,6 +41,14 @@ export const AUDIT_EVENT_LABELS: Record<string, string> = {
   audit_export: "Exportación de auditoría",
   audit_integrity_check: "Verificación de integridad",
   audit_integrity_failed: "Fallo de integridad de auditoría",
+  simulator_case_created: "Caso de simulador creado",
+  simulator_case_updated: "Caso de simulador actualizado",
+  simulator_case_activated: "Caso de simulador activado",
+  simulator_case_deactivated: "Caso de simulador desactivado",
+  simulator_case_deleted: "Caso de simulador eliminado",
+  simulator_run_started: "Ejecución de simulador iniciada",
+  simulator_run_completed: "Ejecución de simulador completada",
+  simulator_run_failed: "Ejecución de simulador incompleta",
 };
 
 export function auditEventLabel(eventType: string): string {

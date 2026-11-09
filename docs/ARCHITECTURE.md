@@ -408,10 +408,10 @@ Ambos son privados. Las políticas de Storage validan el grupo en la ruta `origi
 | Ver todas las versiones | Global | Su grupo | ❌ | ❌ |
 | Eventos auditados y verificación de cadena | Global | Su grupo | ❌ | ❌ |
 | Reportes operativos / exportación CSV | Global | Su grupo | ❌ | ❌ |
-| Seguimiento de actividad | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
-| Ejecutar simulador | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
+| Gestionar casos del simulador | ✅ Global | ✅ Su grupo | ❌ | ❌ |
+| Ejecutar simulador y ver resultados | ✅ Global | ✅ Su grupo | ✅ Su grupo | ❌ |
 
-`supervisor` todavía no tiene un flujo administrativo propio; actualmente consulta como `analyst`. Las capacidades de revisión, seguimiento y pruebas se completarán en la fase 7.
+`supervisor` puede ejecutar lotes y consultar resultados de sus grupos, pero no crear ni editar casos. `group_admin` y `superadmin` gestionan casos y ejecutan el simulador.
 
 ## 9. API
 
@@ -432,6 +432,7 @@ Ambos son privados. Las políticas de Storage validan el grupo en la ruta `origi
 | Método | Endpoint | Autorización | Descripción |
 | --- | --- | --- | --- |
 | `POST` | `/api/agent/query` | Sesión activa | RAG, seguridad, citas y auditoría |
+| `POST` | `/api/simulator/run` | Simulador | `start`, `case` y `finish`; ejecuta `runAgentQuery` sin historial ni rate limit |
 | `POST` | `/api/admin/documents/upload` | Admin | Proxy multipart al Worker |
 | `POST` | `/api/admin/documents/[id]/versions` | Admin | Proxy de nueva versión |
 
@@ -468,8 +469,8 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 
 ### Riesgos pendientes
 
-- Fase 6: aplicar la migración 11 (`agent_out_of_scope`). Las migraciones 9 y 10 ya están aplicadas y la cadena verifica correctamente.
-- Fase 7: simulador de seguridad y evaluación sistemática.
+- Fase 6: migraciones 9, 10 y 11 aplicadas; la cadena verifica correctamente.
+- Fase 7: aplicar la migración 12 (`simulator.sql`) antes de usar el simulador en remoto.
 - Rate limit no probado con carga concurrente.
 - OCR de DOCX con imágenes embebidas no implementado.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
@@ -495,9 +496,9 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 
 ## 12. Estado y evolución
 
-- Fases 1–6 implementadas en local.
-- Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9 y 10 aplicadas y migración 11 pendiente para `out_of_scope`.
-- Fase 7 pendiente: simulador y métricas.
+- Fases 1–7 implementadas en local.
+- Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9, 10 y 11 aplicadas.
+- Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 pendiente de aplicar.
 - Fase 8 en preparación: despliegue Vercel + Cloudflare + Supabase.
 - El corpus de validación local tiene 15 documentos y 1.185 fragmentos, todos publicados como `common`; no se versiona en Git.
 

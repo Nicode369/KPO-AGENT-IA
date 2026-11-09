@@ -50,7 +50,7 @@ Verificar además:
 - `.env.local` y `.dev.vars` no están versionados.
 - No hay claves, JWT ni correos reales en Git.
 - `npm run build` termina sin errores.
-- Las migraciones 1–9 están aplicadas en Supabase. La 10 está pendiente y es necesaria antes de desplegar la fase 6.
+- Las migraciones 1–11 están aplicadas en Supabase. La 12 (`simulator.sql`) está pendiente y es necesaria antes de usar el simulador.
 - Los buckets `documents-original` y `documents-processed` son privados.
 - El corpus local no se sube al repositorio.
 
@@ -72,9 +72,10 @@ Aplicar en orden:
 202611120001_audit_events_chain.sql
 202611120002_audit_events_immutable_refs.sql
 202611120003_agent_out_of_scope.sql
+202611120004_simulator.sql
 ```
 
-La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
+La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. La migración 12 crea `simulator_cases`, `simulator_runs` y `simulator_results` con RLS por grupo. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
 
 Con CLI:
 
@@ -286,13 +287,13 @@ O desplegar la versión anterior del código.
 
 ### Supabase
 
-- Las migraciones 9 (`audit_events_chain`) y 10 (`audit_events_immutable_refs`) ya están aplicadas. La 11 (`agent_out_of_scope`) está pendiente. Para rollback, conserva la tabla y los datos: no la elimines si ya hay eventos.
+- Las migraciones 9 (`audit_events_chain`), 10 (`audit_events_immutable_refs`) y 11 (`agent_out_of_scope`) ya están aplicadas. La 12 (`simulator`) está pendiente. Para rollback, conserva las tablas y los datos: no elimines `audit_events` si ya hay eventos.
 - Antes de cambios de esquema futuros, crear backup o verificar PITR.
 - No borrar tablas ni buckets durante un rollback de aplicación.
 
 ## 9. Limitaciones del despliegue provisional
 
-- Fase 6 implementada; migraciones 9 y 10 aplicadas y cadena verificada. Falta aplicar la migración 11 (`out_of_scope`), validar triggers en producción y desplegar. Fase 7 (simulador) pendiente.
+- Fases 6 y 7 implementadas; migraciones 9, 10 y 11 aplicadas y cadena verificada. Falta aplicar la migración 12 (`simulator.sql`) y desplegar.
 - Sin despliegue público todavía.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
