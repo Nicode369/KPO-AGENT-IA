@@ -85,7 +85,7 @@ npm run deploy       # requiere npx wrangler login
 - Migration 5 adds `profiles.sessions_revoked_at` and `revoke_user_sessions(p_user_id)`.
 - The RPC is superadmin-only, updates the timestamp and deletes `auth.sessions`; refresh tokens cascade.
 - `requireWorkspaceUser` compares the JWT `iat` with `sessions_revoked_at` and signs out stale sessions to `/login?error=session_revoked`.
-- `/admin/users` exposes **Revocar sesiones** only to superadmins and not for their own account. Revocation forces a new login; use profile deactivation to block the account.
+- `/admin/users` exposes account activation/deactivation and superadmin-only account deletion. The `revoke_user_sessions` RPC remains available, but the UI no longer exposes a revoke-sessions button.
 
 ## Current pending work
 
@@ -98,9 +98,9 @@ npm run deploy       # requiere npx wrangler login
 - Superadmins use an active group stored in the `httpOnly` cookie `kpo_active_group`, resolved by `src/lib/auth/group-context.ts`. `/app` exposes the selector; agent queries are scoped to that group's published documents plus `common` and recorded with its `group_id`.
 - Dates are stored in UTC. Server-rendered UI and CSV exports use `America/Bogota`; date filters treat `from`/`to` as Colombian calendar days.
 - Cloudflare is authenticated. Worker `kpo-ingest` is deployed at `https://kpo-ingest.nicode.workers.dev` and responds `/health`.
-- `INGEST_WORKER_URL` is set in `.env.local`. `npm run ingest:base-drive` completed: 15 documents, 1185 chunks, all published as `common`.
+- `INGEST_WORKER_URL` is set in `.env.local`. The KPO corpus has 15 published documents (1,185 chunks) and BPO has 1 published document (97 chunks); both groups use `restricted` visibility. Run `npm run configure:groups -- --apply` for the KPO/BPO data setup.
 - OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.
-- The active `analyst` test account in the KPO group validated the non-superadmin agent flow.
+- The active `analyst` test account in the KPO group validated the non-superadmin agent flow. The A/B test groups and their exclusive test account were removed; the `/admin/users` membership table now exposes superadmin-only account deletion.
 - Remaining: validate the simulator against the deployed app, extend Playwright/E2E to analyst/group-admin flows, and complete deployment configuration (`APP_ORIGIN`, `INGEST_WORKER_URL`).
 - The app is local only; no deployment yet.
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. Configure custom SMTP before re-enabling verification for the final challenge.

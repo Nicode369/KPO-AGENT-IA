@@ -1,7 +1,8 @@
-import { MembershipForm, ProfileActiveForm, RevokeSessionsForm } from "../admin-forms";
+import { DeleteUserForm, MembershipForm, ProfileActiveForm } from "../admin-forms";
 import { connection } from "next/server";
 import { requireAdminUser } from "@/lib/auth/workspace";
 import { getAdminGroups, getAdminMembers } from "@/lib/admin/data";
+import { isServiceRoleConfigured } from "@/lib/supabase/service";
 
 export const instant = false;
 
@@ -10,6 +11,13 @@ export default async function AdminUsersPage() {
   const { supabase, userId, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
   const members = await getAdminMembers(supabase, groups);
+  const canDeleteAccounts = isSuperadmin && isServiceRoleConfigured();
+  const firstMembershipIdByUser = new Map<string, string>();
+  for (const member of members) {
+    if (!firstMembershipIdByUser.has(member.user_id)) {
+      firstMembershipIdByUser.set(member.user_id, member.id);
+    }
+  }
 
   return (
     <main className="admin-content">
@@ -20,49 +28,68 @@ export default async function AdminUsersPage() {
         <h2>Membresías</h2>
         {members.length ? (
           <div className="admin-table-wrap">
-            <table className="admin-table admin-table-wide">
+            <table className="admin-table admin-table-wide users-table">
               <thead>
                 <tr>
                   <th>Usuario</th>
                   <th>Grupo</th>
-                  <th>Rol y estado</th>
+                  <th>Rol y membresía</th>
                   <th>Cuenta</th>
-                  <th>Sesiones</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {members.map((member) => (
-                  <tr key={member.id}>
-                    <td>
-                      <strong>{member.full_name ?? "Sin nombre"}</strong>
-                      <span className="admin-subtle">{member.email}</span>
-                    </td>
-                    <td>{member.group_name}</td>
-                    <td>
-                      <MembershipForm
-                        membershipId={member.id}
-                        role={member.role}
-                        status={member.status}
-                        canAssignGroupAdmin={isSuperadmin}
-                      />
-                    </td>
-                    <td>
-                      <span className={`admin-tag ${member.is_active ? "admin-tag-ok" : "admin-tag-muted"}`}>
-                        {member.is_active ? "Activa" : "Inactiva"}
-                      </span>
-                      {isSuperadmin && member.user_id !== userId ? (
-                        <ProfileActiveForm userId={member.user_id} isActive={member.is_active} />
-                      ) : null}
-                    </td>
-                    <td>
-                      {isSuperadmin && member.user_id !== userId ? (
-                        <RevokeSessionsForm userId={member.user_id} />
-                      ) : (
-                        <span className="admin-subtle">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {members.map((member) => {
+                  const displayName = member.full_name ?? member.email;
+                  const initials = displayName.trim().slice(0, 2).toUpperCase();
+                  const showDelete =
+                    isSuperadmin &&
+                    canDeleteAccounts &&
+                    member.user_id !== userId &&
+                    firstMembershipIdByUser.get(member.user_id) === member.id;
+
+                  return (
+                    <tr key={member.id}>
+                      <td>
+                        <div className="admin-user-cell">
+                          <span className="admin-user-avatar" aria-hidden="true">{initials}</span>
+                          <div className="admin-user-meta">
+                            <strong>{member.full_name ?? "Sin nombre"}</strong>
+                            <span className="admin-subtle">{member.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="admin-group-chip">{member.group_name}</span>
+                      </td>
+                      <td>
+                        <MembershipForm
+                          membershipId={member.id}
+                          role={member.role}
+                          status={member.status}
+                          canAssignGroupAdmin={isSuperadmin}
+                        />
+                      </td>
+                      <td>
+                        <div className="admin-status-cell">
+                          <span className={`admin-tag ${member.is_active ? "admin-tag-ok" : "admin-tag-muted"}`}>
+                            {member.is_active ? "Activa" : "Inactiva"}
+                          </span>
+                          {isSuperadmin && member.user_id !== userId ? (
+                            <ProfileActiveForm userId={member.user_id} isActive={member.is_active} />
+                          ) : null}
+                        </div>
+                      </td>
+                      <td>
+                        {showDelete ? (
+                          <DeleteUserForm userId={member.user_id} email={member.email} name={member.full_name} />
+                        ) : (
+                          <span className="admin-subtle">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

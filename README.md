@@ -57,9 +57,9 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
 | 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9, 10 y 11 aplicadas y verificadas |
 | 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
-| 8 | Integración y despliegue | 🚧 En preparación: código y documentación listos; falta publicar Worker, Vercel y configurar Auth/redirects |
+| 8 | Integración y despliegue | 🚧 En preparación: Worker desplegado; falta confirmar Vercel y configurar Auth/redirects |
 
-El repositorio incluye una validación local con **15 documentos, 1.185 fragmentos, todos publicados como `common`**. Ese corpus no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`.
+El repositorio incluye una validación local con **16 documentos y 1.282 fragmentos**: 15 en KPO y 1 en BPO, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups`.
 
 ## Capacidades
 
@@ -72,6 +72,7 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 - Roles `group_admin`, `supervisor` y `analyst`, más `superadmin`.
 - Membresías activas, pendientes y deshabilitadas.
 - Revocación de sesiones para superadministradores.
+- Eliminación permanente de cuentas desde la tabla de miembros de `/admin/users`, exclusiva del superadmin; conserva la auditoría histórica.
 - El superadmin elige un grupo activo; las consultas se registran y auditan en ese grupo sin exigir una membresía.
 - RLS y RPCs `security definer` para administración; ocultar botones no sustituye los controles de servidor.
 
@@ -115,7 +116,7 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 
 - `/admin/groups`: crear y listar grupos.
 - `/admin/invitations`: generar, copiar y revocar invitaciones.
-- `/admin/users`: cambiar rol, estado y revocar sesiones.
+- `/admin/users`: cambiar rol y estado, activar/desactivar cuentas y eliminar cuentas (solo superadmin).
 - `/admin/documents`: cargar, procesar, revisar, aprobar, publicar, retirar y versionar.
 - `/admin/documents/[id]`: detalle de versiones, fragmentos, accesos, eventos y errores.
 - `/admin/audit`: historial global de consultas para superadmin y acotado a sus grupos para `group_admin`, con filtros por resultado, grupo, usuario, fechas y texto.
@@ -191,6 +192,7 @@ Los diagramas de secuencia, el modelo entidad-relación completo y la topología
 │   └── config.toml
 ├── workers/kpo-ingest/             # Worker de ingesta, OCR y modelos
 ├── scripts/ingest-base-drive.mjs   # ingesta masiva local
+├── scripts/configure-groups.mjs    # reconfiguración KPO/BPO, sin A/B
 ├── e2e/                            # Playwright
 ├── docs/                           # arquitectura, despliegue y memoria
 └── public/                         # activos estáticos
@@ -281,6 +283,15 @@ npm run ingest:base-drive
 
 El script usa `INGEST_EMAIL`, `INGEST_PASSWORD`, `INGEST_GROUP_ID`, `INGEST_GROUP_SLUG` y `BASE_DRIVE_DIR`. Requiere una cuenta `group_admin` del grupo destino. `base_drive/` está ignorado y no forma parte del repositorio.
 
+Para reconfigurar los grupos de validación (KPO con 15 documentos restringidos, BPO con el paper IESE OP-08-02 y sin grupos A/B), ejecuta primero el dry-run y luego aplica:
+
+```bash
+npm run configure:groups
+npm run configure:groups -- --apply
+```
+
+El script requiere `SUPABASE_SERVICE_ROLE_KEY` para borrar los grupos/cuentas de prueba y `INGEST_WORKER_URL` accesible para ingestar el PDF de BPO. La cuenta `INGEST_EMAIL` debe ser superadministradora.
+
 ### 7. Confirmación de correo
 
 La configuración actual usa **Confirm email desactivado** para evitar el límite 429 del SMTP integrado de Supabase. Las cuentas creadas desde el panel de Auth ya están confirmadas. Si se requiere verificación real, configura un proveedor SMTP propio y reactiva la confirmación; el trigger ya deja la membresía pendiente hasta que el usuario confirme.
@@ -354,7 +365,7 @@ Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el d
 | `/admin` | Superadmin / `group_admin` | Resumen administrativo |
 | `/admin/groups` | Superadmin | Crear y listar grupos |
 | `/admin/invitations` | Superadmin / `group_admin` | Generar, copiar y revocar invitaciones |
-| `/admin/users` | Superadmin / `group_admin` | Roles, estados y revocación de sesiones |
+| `/admin/users` | Superadmin / `group_admin` | Roles, estados, activación y eliminación de cuentas (solo superadmin) |
 | `/admin/documents` | Superadmin / `group_admin` | Biblioteca y carga documental |
 | `/admin/documents/[id]` | Superadmin / `group_admin` | Detalle, versiones, fragmentos y eventos |
 | `/admin/audit` | Superadmin / `group_admin` | Historial global o acotado a sus grupos |
@@ -428,7 +439,7 @@ erDiagram
 | Gestionar miembros y roles | ✅ Global | ✅ Su grupo, sin asignar `group_admin` | ❌ | ❌ |
 | Gestionar documentos | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Publicar/retirar versiones | ✅ Global | ✅ Su grupo | ❌ | ❌ |
-| Revocar sesiones | ✅ | ❌ | ❌ | ❌ |
+| Revocar sesiones (RPC) | ✅ | ❌ | ❌ | ❌ |
 | Historial de consultas administrativo | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Eventos auditados, reportes y exportación CSV | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Verificar cadena de auditoría | ✅ | ✅ | ❌ | ❌ |
@@ -502,7 +513,7 @@ Resumen:
 - **Rate limit no probado bajo carga real.**
 - **OCR de imágenes embebidas en DOCX no implementado.**
 - **Supervisor sin panel de seguimiento dedicado:** puede ejecutar el simulador y consultar sus resultados, pero no gestiona casos ni miembros.
-- **Datos de validación locales:** los 15 documentos y 1.185 fragmentos no forman parte del repo.
+- **Datos de validación locales:** los 16 documentos y 1.282 fragmentos no forman parte del repo; KPO vive en `../base_drive/` y BPO se descarga desde el IESE.
 - **Integración de proveedor de IA:** la capa está separada en el Worker, pero cambiar de proveedor requiere adaptar `workers/kpo-ingest/src`.
 
 ## Fases pendientes

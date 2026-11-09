@@ -156,3 +156,20 @@ export function CheckIcon({ className, size = 18 }: IconProps) {
     </svg>
   );
 }
+
+export function PowerIcon({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...frame(size)} className={className}>
+      <path d="M12 3.75v7.5" />
+      <path d="M7.25 6.1a7 7 0 1 0 9.5 0" />
+    </svg>
+  );
+}
+
+export function TrashIcon({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...frame(size)} className={className}>
+      <path d="M4.75 7.25h14.5M9.25 7.25V5.5h5.5v1.75M6.75 7.25l.75 12h9l.75-12M10 11v5M14 11v5" />
+    </svg>
+  );
+}

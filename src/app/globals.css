@@ -1666,6 +1666,124 @@ button {
   gap: 7px;
 }
 
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.users-table th:last-child,
+.users-table td:last-child {
+  text-align: right;
+}
+
+.users-table td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.users-table .admin-membership-form {
+  gap: 6px;
+}
+
+.users-table .admin-membership-form select {
+  min-width: 110px;
+  height: 34px;
+}
+
+.admin-user-cell {
+  display: flex;
+  min-width: 210px;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-user-avatar {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.admin-user-meta {
+  min-width: 0;
+}
+
+.admin-user-meta strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.admin-user-meta .admin-subtle {
+  margin-top: 2px;
+}
+
+.admin-group-chip {
+  display: inline-flex;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-inline-form > button.admin-icon-button {
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-color: var(--line-strong);
+  background: var(--white);
+  color: var(--ink-soft);
+}
+
+.admin-inline-form > button.admin-icon-button:hover {
+  border-color: var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.admin-inline-form > button.admin-icon-button.admin-icon-button-danger {
+  border-color: transparent;
+  background: var(--red-50);
+  color: var(--red-700);
+}
+
+.admin-inline-form > button.admin-icon-button.admin-icon-button-danger:hover {
+  background: var(--red-600);
+  color: var(--white);
+}
+
+.admin-inline-form > button.admin-icon-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.admin-icon-button:focus-visible {
+  outline: 2px solid var(--red-500);
+  outline-offset: 2px;
+}
+
 .admin-inline-form select {
   width: auto;
   min-width: 108px;

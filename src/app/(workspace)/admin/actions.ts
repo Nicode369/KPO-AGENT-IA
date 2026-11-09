@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 
+import { deleteUserBlockedReason } from "@/lib/admin/users";
+import { recordAuditEvent } from "@/lib/audit/log";
 import {
   type AppRole,
   type MembershipStatus,
   requireAdminUser,
 } from "@/lib/auth/workspace";
 import { bogotaDayEndIso } from "@/lib/datetime";
+import { createServiceClient, isServiceRoleConfigured } from "@/lib/supabase/service";
 
 export type AdminActionState = {
   status: "idle" | "error" | "success";
@@ -227,30 +230,53 @@ export async function setProfileActiveAction(
   return { status: "success", message: "Cuenta actualizada." };
 }
 
-export async function revokeUserSessionsAction(
+export async function deleteUserAction(
   _previousState: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
-  const { supabase, isSuperadmin, userId: currentUserId } = await requireAdminUser();
-  if (!isSuperadmin) return errorState("Solo el superadministrador puede revocar sesiones.");
+  const { isSuperadmin, userId: currentUserId, profile } = await requireAdminUser();
+  if (!isSuperadmin) return errorState("Solo el superadministrador puede eliminar cuentas.");
+  if (!isServiceRoleConfigured()) {
+    return errorState("La eliminación de cuentas requiere la clave de servicio.");
+  }
 
   const userId = field(formData, "user_id");
   if (!userId) return errorState("Usuario inválido.");
-  if (userId === currentUserId) {
-    return errorState("No puedes revocar tu propia sesión desde aquí.");
+
+  const service = createServiceClient();
+  const { data: target, error: targetError } = await service
+    .from("profiles")
+    .select("id, email, is_superadmin")
+    .eq("id", userId)
+    .maybeSingle<{ id: string; email: string; is_superadmin: boolean }>();
+
+  if (targetError) return errorState("No se pudo consultar la cuenta.");
+  if (!target) return errorState("La cuenta no existe.");
+
+  const blockedReason = deleteUserBlockedReason(target, currentUserId);
+  if (blockedReason) return errorState(blockedReason);
+
+  const { error } = await service.auth.admin.deleteUser(userId);
+  if (error) {
+    console.error("[admin] delete user failed", {
+      code: error.code,
+      message: error.message,
+    });
+    return errorState("No se pudo eliminar la cuenta.");
   }
 
-  const { error } = await supabase.rpc("revoke_user_sessions", { p_user_id: userId });
-  if (error) {
-    if (error.code === "42501") return errorState("No autorizado para esa cuenta.");
-    if (error.code === "P0002") return errorState("El usuario no existe.");
-    return errorState("No se pudieron revocar las sesiones.");
-  }
+  await recordAuditEvent({
+    eventType: "profile_deleted",
+    actorId: currentUserId,
+    actorEmail: profile.email,
+    targetType: "profile",
+    targetId: userId,
+    metadata: { email: target.email },
+  });
 
   revalidatePath("/admin");
   revalidatePath("/admin/users");
-  return {
-    status: "success",
-    message: "Sesiones revocadas. El usuario deberá iniciar sesión de nuevo.",
-  };
+  revalidatePath("/admin/audit");
+  revalidatePath("/admin/audit/events");
+  return { status: "success", message: "Cuenta eliminada de forma permanente." };
 }

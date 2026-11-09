@@ -10,7 +10,8 @@
     "ingest:base-drive": "node --env-file=.env.local scripts/ingest-base-drive.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "configure:groups": "node --env-file=.env.local scripts/configure-groups.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -174,7 +174,7 @@ Manual checks:
 - `/register` with a valid code: code input is uppercase, profile and membership are created, invitation `use_count` increments.
 - `/admin/invitations`: new code appears in the success panel and in the history; copy button works; old invitations show `No disponible`.
 - Password fields accept 6 characters in the UI and in the action.
-- `/admin/users`: a superadmin can revoke another user's sessions; the affected user is redirected to `/login?error=session_revoked` on the next request and cannot refresh the old session.
+- `/admin/users`: la tabla de miembros permite activar/desactivar cuentas y, solo al superadmin, eliminarlas. La RPC de revocación de sesiones sigue disponible, pero ya no se expone como botón; el usuario afectado sería redirigido a `/login?error=session_revoked`.
 - `/admin/documents`: upload a PDF/DOCX, confirm `pending_review`, inspect extracted/chunks, approve, publish and retire.
 - Upload a new version while the document is `published`; verify the old version remains queryable until the new one is published.
 - Reprocess a failed document and verify access restrictions with a group admin from another group.
@@ -204,10 +204,10 @@ Do not commit test users, invitations, screenshots or credentials.
 - La migración 5 está aplicada en remoto. Verificar en el Dashboard que `create_invitation` use códigos de 6 caracteres y vigencia de 365 días (migraciones 3 y 4).
 - The current project uses **Confirm email** disabled to avoid the built-in SMTP 429 limit. If email verification is required for the final challenge, configure a custom SMTP provider and re-enable it; the trigger already leaves memberships pending until confirmation.
 - No deployment yet; `APP_ORIGIN` must match the deployed URL.
-- Fases 4 y 5 están implementadas y validadas en local: 15 documentos, 1185 fragmentos, todos `published` y `common`; el agente respondió con citas versionadas, se abstuvo sin evidencia y bloqueó extracción del prompt. Falta el despliegue del Worker.
+- Fases 4 y 5 están implementadas y validadas en local: 16 documentos y 1.282 fragmentos, todos `published`; KPO conserva 15 documentos y BPO tiene 1, ambos grupos con visibilidad `restricted`. El agente respondió con citas versionadas, se abstuvo sin evidencia y bloqueó extracción del prompt.
 - El Worker procesa en línea dentro del request de Next (`maxDuration = 60`) y el proxy de Next puede limitar cuerpos grandes (~4.5 MB en Vercel). Un PDF escaneado muy grande puede agotar el tiempo; si ocurre, mover el procesamiento a una cola o ejecutar la ingesta desde el script con el Worker desplegado.
 - El OCR de PDF escaneados quedó validado con `Circular Externa 100-000015` usando Mistral Small 3.1; el agente citó el artículo 631-5. El OCR de DOCX con imágenes no está implementado.
-- La cuenta `analyst` de prueba del grupo KPO validó el acceso de un usuario no superadministrador a documentos `common`.
+- La cuenta `analyst` de prueba del grupo KPO validó el acceso de un usuario no superadministrador a los documentos de su grupo. Los grupos de prueba A/B se eliminaron y sus cuentas exclusivas se borraron; la tabla de miembros de `/admin/users` permite al superadmin eliminar cuentas permanentemente. El grupo BPO se creó con el paper IESE OP-08-02 como único documento.
 
 ## Security notes
 

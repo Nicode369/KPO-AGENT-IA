@@ -1,16 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { type ComponentType, useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { CheckIcon, PowerIcon, TrashIcon } from "@/components/icons";
 import { formatDate } from "@/lib/datetime";
 
 import {
   type AdminActionState,
   createGroupAction,
   createInvitationAction,
+  deleteUserAction,
   revokeInvitationAction,
-  revokeUserSessionsAction,
   setProfileActiveAction,
   updateMembershipAction,
 } from "./actions";
@@ -24,6 +25,34 @@ type MembershipStatus = "pending" | "active" | "disabled";
 function SubmitButton({ children, pendingLabel }: { children: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return <button type="submit" disabled={pending}>{pending ? pendingLabel : children}</button>;
+}
+
+function IconSubmitButton({
+  label,
+  pendingLabel,
+  icon: Icon,
+  danger = false,
+}: {
+  label: string;
+  pendingLabel: string;
+  icon: ComponentType<{ className?: string; size?: number }>;
+  danger?: boolean;
+}) {
+  const { pending } = useFormStatus();
+  const text = pending ? pendingLabel : label;
+
+  return (
+    <button
+      className={`admin-icon-button${danger ? " admin-icon-button-danger" : ""}`}
+      type="submit"
+      disabled={pending}
+      aria-label={text}
+      aria-busy={pending}
+      title={text}
+    >
+      <Icon size={16} />
+    </button>
+  );
 }
 
 function ActionMessage({ state }: { state: AdminActionState }) {
@@ -159,7 +188,7 @@ export function MembershipForm({
         <option value="active">Activo</option>
         <option value="disabled">Deshabilitado</option>
       </select>
-      <SubmitButton pendingLabel="Guardando...">Guardar</SubmitButton>
+      <IconSubmitButton label="Guardar rol y estado" pendingLabel="Guardando..." icon={CheckIcon} />
       <ActionMessage state={state} />
     </form>
   );
@@ -172,19 +201,40 @@ export function ProfileActiveForm({ userId, isActive }: { userId: string; isActi
     <form className="admin-inline-form" action={formAction}>
       <input type="hidden" name="user_id" value={userId} />
       <input type="hidden" name="is_active" value={isActive ? "false" : "true"} />
-      <SubmitButton pendingLabel="Guardando...">{isActive ? "Desactivar" : "Reactivar"}</SubmitButton>
+      <IconSubmitButton
+        label={isActive ? "Desactivar cuenta" : "Reactivar cuenta"}
+        pendingLabel="Guardando..."
+        icon={PowerIcon}
+      />
       <ActionMessage state={state} />
     </form>
   );
 }
 
-export function RevokeSessionsForm({ userId }: { userId: string }) {
-  const [state, formAction] = useActionState(revokeUserSessionsAction, initialState);
+export function DeleteUserForm({
+  userId,
+  email,
+  name,
+}: {
+  userId: string;
+  email: string;
+  name: string | null;
+}) {
+  const [state, formAction] = useActionState(deleteUserAction, initialState);
+  const label = name ? `${name} (${email})` : email;
 
   return (
-    <form className="admin-inline-form" action={formAction}>
+    <form
+      className="admin-inline-form"
+      action={formAction}
+      onSubmit={(event) => {
+        if (!window.confirm(`¿Eliminar definitivamente la cuenta ${label}? Se borrarán sus membresías, consultas y simulaciones. Esta acción no se puede deshacer.`)) {
+          event.preventDefault();
+        }
+      }}
+    >
       <input type="hidden" name="user_id" value={userId} />
-      <SubmitButton pendingLabel="Revocando...">Revocar sesiones</SubmitButton>
+      <IconSubmitButton label="Eliminar cuenta" pendingLabel="Eliminando..." icon={TrashIcon} danger />
       <ActionMessage state={state} />
     </form>
   );

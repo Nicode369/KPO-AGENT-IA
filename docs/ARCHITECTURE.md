@@ -127,6 +127,7 @@ sequenceDiagram
   - `sessions_revoked_at` contra `iat`;
   - al menos una membresía activa, salvo superadmin.
 - `requireAdminUser()` exige `is_superadmin` o rol `group_admin`.
+- El superadmin puede eliminar cuentas desde la tabla de miembros de `/admin/users`; la acción usa la Admin API con service role, bloquea el auto-borrado y el borrado de otros superadmins, y deja el rastro en `audit_events`.
 - `getSuperadminGroupContext()` resuelve el grupo activo del superadmin desde la cookie `httpOnly` `kpo_active_group`; si falta o no es válida, usa KPO o el primer grupo disponible.
 - La consulta del agente para superadmin se limita a documentos publicados del grupo activo más los `common`, y registra `agent_queries.group_ids = [grupo_activo]`.
 - La autorización de datos se repite en PostgreSQL con RLS.
@@ -404,7 +405,7 @@ Ambos son privados. Las políticas de Storage validan el grupo en la ruta `origi
 | Gestionar membresías | Global | Su grupo | ❌ | ❌ |
 | Asignar `group_admin` | ✅ | ❌ | ❌ | ❌ |
 | Activar/desactivar cuentas | ✅ | ❌ | ❌ | ❌ |
-| Revocar sesiones | ✅ | ❌ | ❌ | ❌ |
+| Revocar sesiones (RPC) | ✅ | ❌ | ❌ | ❌ |
 | Cargar/procesar documentos | Global | Su grupo | ❌ | ❌ |
 | Aprobar/publicar/retirar | Global | Su grupo | ❌ | ❌ |
 | Ver todas las versiones | Global | Su grupo | ❌ | ❌ |
@@ -502,6 +503,6 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 - Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9, 10 y 11 aplicadas.
 - Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 aplicada.
 - Fase 8 en preparación: despliegue Vercel + Cloudflare + Supabase.
-- El corpus de validación local tiene 15 documentos y 1.185 fragmentos, todos publicados como `common`; no se versiona en Git.
+- El corpus de validación local tiene 16 documentos y 1.282 fragmentos: 15 en KPO y 1 en BPO, todos publicados como `restricted`. El corpus KPO no se versiona en Git.
 
 Consulta [`../README.md`](../README.md) para uso, [`DEPLOYMENT.md`](DEPLOYMENT.md) para publicación y [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) para el estado detallado.

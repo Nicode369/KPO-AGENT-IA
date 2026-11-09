@@ -6,6 +6,8 @@ describe("auditEventLabel", () => {
   it("returns the Spanish label for known events", () => {
     expect(auditEventLabel("auth_login_success")).toBe("Inicio de sesión");
     expect(auditEventLabel("document_published")).toBe("Documento publicado");
+    expect(auditEventLabel("profile_deleted")).toBe("Cuenta eliminada");
+    expect(auditEventLabel("group_deleted")).toBe("Grupo eliminado");
   });
 
   it("falls back to a readable event name", () => {

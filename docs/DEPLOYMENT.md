@@ -299,7 +299,7 @@ O desplegar la versión anterior del código.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
 - Rate limit no probado con carga real.
-- El corpus local de 15 documentos y 1.185 fragmentos no se versiona.
+- El corpus local de 16 documentos y 1.282 fragmentos no se versiona: KPO vive en `../base_drive/` y BPO se obtiene con `npm run configure:groups`.
 
 ## 10. Checklist final
 

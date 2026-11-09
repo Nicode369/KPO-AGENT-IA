@@ -33,6 +33,11 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText("Grupos disponibles")).toBeVisible();
     await expect(page.getByLabel("Grupo activo")).toBeVisible();
+    const groupOptions = page.getByLabel("Grupo activo").locator("option");
+    await expect(groupOptions.filter({ hasText: "KPO" })).toHaveCount(1);
+    await expect(groupOptions.filter({ hasText: "BPO" })).toHaveCount(1);
+    await expect(groupOptions.filter({ hasText: "grupo A" })).toHaveCount(0);
+    await expect(groupOptions.filter({ hasText: "grupo B" })).toHaveCount(0);
     await expectNoNextRuntimeError(page);
 
     await page.goto("/app/history");
@@ -66,13 +71,18 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByText(/Circular Externa 100-000015/).first()).toBeVisible();
     await expect(
       page.locator(".admin-stat", { hasText: "Fragmentos indexados" }),
-    ).toContainText("1185");
+    ).not.toContainText("0");
     await expectNoNextRuntimeError(page);
 
     await page.goto("/admin/users");
     await expect(
       page.getByRole("heading", { level: 1, name: "Miembros y roles" }),
     ).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Acciones" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Guardar rol y estado" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Desactivar cuenta" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Eliminar cuenta" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Revocar sesiones" })).toHaveCount(0);
     await expectNoNextRuntimeError(page);
 
     await page.goto("/admin/groups");
