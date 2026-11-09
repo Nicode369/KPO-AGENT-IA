@@ -1,6 +1,6 @@
 # Project memory — KPO Agent AI
 
-Last updated: 2026-11-07. Keep this file current when architecture or pending work changes.
+Last updated: 2026-11-08. Keep this file current when architecture or pending work changes.
 
 ## Documentation map
 
@@ -12,7 +12,7 @@ Last updated: 2026-11-07. Keep this file current when architecture or pending wo
 
 ## Product
 
-Web app for document consultation in audit, accounting and compliance. Phases 1–5 are implemented. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phases 6 (extended audit), 7 (simulator) and 8 (deployment) remain pending or partial.
+Web app for document consultation in audit, accounting and compliance. Phases 1–6 are implemented in local. Phase 3 covers identity, invitation-based registration, groups, memberships and the admin area. Phase 4 adds private document upload, extraction (including OCR for scanned PDFs), chunking, embeddings, review, publication and versioning. Phase 5 adds a retrieval-augmented agent that answers only from published versions, cites fragment numbers, abstains when evidence is insufficient, blocks prompt/secret/cross-group extraction attempts and records an auditable per-user history. Phase 6 adds an append-only `audit_events` hash chain (SHA-256), auth/admin/ciclo documental logging, group-scoped events viewer, integrity verifier, reports and protected CSV exports. Migration 9 is applied and verified in Supabase. Phase 7 (simulator) and Phase 8 (deployment) remain pending or partial.
 
 ## Routes
 
@@ -22,9 +22,12 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - `/app/history` — personal query history with outcome, model, latency, grounding and sources.
 - `/admin`, `/admin/groups`, `/admin/invitations`, `/admin/users` — access administration.
 - `/admin/audit` — global query history for superadmins and group-scoped history for `group_admin`, read with the service role and group filters.
+- `/admin/audit/events` — append-only audit events with hash chain, filters, page size 25, CSV export and manual integrity verification.
+- `/admin/reports` — 24 h overview of agent outcomes, security alerts, audit-chain state, document status and protected exports.
 - `/admin/security` — blocked and rejected security events for the groups an admin manages.
 - `/admin/documents`, `/admin/documents/[id]` — document library, upload, review, access and version history.
 - `/api/admin/documents/upload`, `/api/admin/documents/[id]/versions` — authenticated multipart proxies to the ingestion Worker.
+- `/api/admin/audit/export` — admin-only CSV export (`dataset=queries|events`) scoped to the profile; each export appends an `audit_export` event.
 - `/api/agent/query` — authenticated RAG query: embeds the question, retrieves authorized published chunks, calls the chat model, validates citations and records an audit trail.
 - `/auth/callback` — exchanges Supabase auth codes and redirects.
 
@@ -74,6 +77,7 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - `document_access` — grupos adicionales autorizados para documentos restringidos.
 - `document_events` — auditoría del ciclo de vida (carga, procesamiento, aprobación, publicación, retiro, metadatos y accesos).
 - `agent_queries` / `agent_query_sources` — auditoría de preguntas, respuesta, modelo, prompt, abstención, outcome, grounding, controles, hashes, latencia y fragmentos recuperados con título del documento.
+- `audit_events` — cadena append-only global (`seq`, `event_type`, `actor_id`, `actor_email`, `group_id`, `target_type`, `target_id`, `metadata`, `prev_hash`, `event_hash`, `created_at`). Solo `service_role` accede; la escritura pasa por `append_audit_event` y la verificación por `verify_audit_chain`. `actor_id` y `group_id` se guardan **sin FK** para que borrar usuarios o grupos no mute columnas ya hasheadas. Disparadores registran cambios en perfiles, grupos, invitaciones, membresías y `document_events`; la app registra auth, denegaciones, exportaciones y verificaciones.
 - Buckets privados: `documents-original` y `documents-processed`; las políticas de Storage validan el grupo en `(storage.foldername(name))[2]`.
 
 RLS denies direct access to `invitations` for authenticated users. Admin screens use security-definer RPCs:
@@ -115,6 +119,9 @@ Apply in order:
 6. `202611100001_documents_and_ingestion.sql` — document tables, pgvector chunks, lifecycle RPCs, RLS, private buckets and storage policies. Applied remotely and verified.
 7. `202611110001_document_version_publication.sql` — `documents.published_version_id`, version-aware RLS, `publish_document` and `retire_document`. Applied remotely and verified.
 8. `202611110002_agent_retrieval.sql` — `agent_queries`, `agent_query_sources`, `match_document_chunks` and `record_agent_query`. Applied remotely and verified.
+9. `202611120001_audit_events_chain.sql` — append-only `audit_events`, SHA-256 hash chain, `append_audit_event`, `verify_audit_chain`, RLS/grants and triggers for profiles, groups, invitations, redemptions, memberships and document events. Applied remotely; the chain starts empty because historical events are not backfilled.
+10. `202611120002_audit_events_immutable_refs.sql` — applied and verified. Drops the mutable `on delete set null` FKs on `audit_events.actor_id` and `audit_events.group_id` and restores the original `group_id`/`actor_id` values where they were nulled, so previously hashed events verify again.
+11. `202611120003_agent_out_of_scope.sql` — **pending to apply.** Adds `out_of_scope` to the `agent_queries` outcome constraint and migrates legacy `insufficient_evidence` rows without relevant sources.
 
 The remote project may have an older lowercase implementation of migration 3. Migration 4 accepts both uppercase and lowercase 6-character hashes, so reapplying it does not break existing invitations.
 
@@ -171,6 +178,8 @@ Manual checks:
 - `/app`: ask a question answerable by the published corpus; confirm citations link to sources. Ask an unrelated question; confirm the exact abstention text and no sources. Try a prompt-injection or secret request; confirm it is blocked and appears in history.
 - `/app/history`: confirm the query, outcome, model, latency, grounding and source snapshots are visible only to the same user.
 - `/admin/audit`: as superadmin, confirm queries from every group are visible with full detail and filters; as `group_admin`, confirm only queries from the managed groups appear and the group filter cannot be escaped.
+- `/admin/audit/events`: confirm login/logout, failed auth, admin changes, document lifecycle and export events appear with labels and hashes; run **Verificar integridad** and check the success panel; as `group_admin`, confirm only events for managed groups (plus his own scoped exports) are listed.
+- `/admin/reports`: confirm 24 h counts, document status table, last hash and both CSV downloads; each download must append an `audit_export` event.
 - `npm run test:e2e` with a running server (`npx playwright install chromium` once). The smoke test checks `/login`.
 
 Do not commit test users, invitations, screenshots or credentials.
@@ -178,6 +187,12 @@ Do not commit test users, invitations, screenshots or credentials.
 ## Known issues / next steps
 
 - Migraciones 6, 7 y 8 aplicadas en Supabase; tablas, RPCs, pgvector y buckets privados verificados.
+- La migración 9 (`audit_events_chain`) está aplicada. La cadena arranca vacía: no hay backfill de eventos anteriores.
+- La migración 10 (`audit_events_immutable_refs`) está aplicada y verificada: eliminó las FKs `on delete set null` que alteraban `actor_id`/`group_id` ya incluidos en el hash y reparó los eventos afectados. La cadena verificó `is_valid: true`.
+- La migración 11 (`agent_out_of_scope`) está pendiente: amplía el check de outcomes y migra consultas históricas sin fuentes relevantes.
+- La fase 6 está completa: cadena SHA-256, logging de auth/admin/exportaciones, visor de eventos, verificador y reportes. Los triggers se validaron creando/desactivando/borrando un grupo temporal.
+- El agente distingue `out_of_scope` (sin fuentes publicadas relevantes) de `insufficient_evidence` (hay fuentes, pero el modelo se abstiene o no cita).
+- Las fechas se guardan en UTC; UI y CSV muestran `America/Bogota`, y los filtros por día usan el calendario colombiano.
 - Cloudflare autenticado; el Worker corre localmente y pasó `typecheck`, tests, `dry-run` y `/health`. Falta desplegarlo con `npm run deploy`.
 - `INGEST_WORKER_URL` está configurado en `.env.local` apuntando al Worker local. En producción debe apuntar al Worker desplegado.
 - La migración 5 está aplicada en remoto. Verificar en el Dashboard que `create_invitation` use códigos de 6 caracteres y vigencia de 365 días (migraciones 3 y 4).
@@ -194,4 +209,5 @@ Do not commit test users, invitations, screenshots or credentials.
 - `SUPABASE_SERVICE_ROLE_KEY` is server-only; never expose it to the browser.
 - Both document buckets are private. The UI only shows short-lived signed URLs to authorized admins; the RAG phase should use the service role for retrieval, not public URLs.
 - Storing `invitations.code` is an explicit product decision to support history. The column is only returned by an authorized security-definer RPC; keep it out of client-side direct table queries.
+- `audit_events` is append-only: no `update`/`delete` policies, only `service_role` grants, and `private.append_audit_event` recomputes `prev_hash` under an advisory lock. Never expose the chain or raw metadata to clients; the UI reads it through server components with the service role.
 - Rotate/revoke an invitation if a code leaks.

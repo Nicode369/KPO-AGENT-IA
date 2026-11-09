@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDateOnly, formatDateTime } from "@/lib/datetime";
 import { getAdminGroups } from "@/lib/admin/data";
 import {
   documentStatusLabel,
@@ -40,18 +41,11 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 function dateTime(value: string | null): string {
-  return value
-    ? new Date(value).toLocaleString("es-CO", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
+  return value ? formatDateTime(value) : "—";
 }
 
 function dateOnly(value: string | null): string {
-  return value
-    ? new Date(`${value}T00:00:00`).toLocaleDateString("es-CO")
-    : "—";
+  return value ? formatDateOnly(value) : "—";
 }
 
 export default async function AdminDocumentDetailPage({

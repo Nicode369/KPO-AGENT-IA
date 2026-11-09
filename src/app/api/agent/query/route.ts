@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
+import { resolveAnswerOutcome } from "@/lib/agent/outcome";
 import {
   ABSTENTION_TEXT,
+  OUT_OF_SCOPE_TEXT,
   PROMPT_VERSION,
   buildMessages,
   buildSources,
@@ -258,7 +260,12 @@ export async function POST(request: Request) {
   };
 
   if (!sources.length) {
-    const answer = ABSTENTION_TEXT;
+    const answer = OUT_OF_SCOPE_TEXT;
+    const resolution = resolveAnswerOutcome({
+      hasSources: false,
+      modelAbstained: false,
+      hasCitations: false,
+    });
     const latencyMs = Date.now() - startedAt;
     const auditSaved = await recordQuery(supabase, {
       question,
@@ -266,8 +273,8 @@ export async function POST(request: Request) {
       model: "none",
       promptVersion: PROMPT_VERSION,
       abstained: true,
-      outcome: "insufficient_evidence",
-      outcomeReason: "no_authorized_sources",
+      outcome: resolution.outcome,
+      outcomeReason: resolution.outcomeReason,
       latencyMs,
       groupIds,
       sources: [],
@@ -278,8 +285,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       answer,
       abstained: true,
-      outcome: "insufficient_evidence",
-      outcomeReason: "no_authorized_sources",
+      outcome: resolution.outcome,
+      outcomeReason: resolution.outcomeReason,
       sources: [],
       model: "none",
       latencyMs,
@@ -351,14 +358,11 @@ export async function POST(request: Request) {
   const citedSources = abstained
     ? []
     : sources.filter((source) => citationCheck.citations.includes(source.rank));
-  const outcome: AgentOutcome = abstained
-    ? "insufficient_evidence"
-    : "answered";
-  const outcomeReason = abstained
-    ? modelAbstained
-      ? "model_abstained"
-      : "citation_validation_failed"
-    : null;
+  const { outcome, outcomeReason } = resolveAnswerOutcome({
+    hasSources: true,
+    modelAbstained,
+    hasCitations,
+  });
   const grounding = averageSimilarity(
     citedSources.length ? citedSources : sources,
   );

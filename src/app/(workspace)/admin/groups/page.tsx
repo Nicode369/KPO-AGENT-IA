@@ -1,6 +1,7 @@
 import { CreateGroupForm } from "../admin-forms";
 import { connection } from "next/server";
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDate } from "@/lib/datetime";
 import { getAdminGroups } from "@/lib/admin/data";
 
 export const instant = false;
@@ -42,7 +43,7 @@ export default async function AdminGroupsPage() {
                     <td>{group.name}</td>
                     <td><code>{group.slug}</code></td>
                     <td>{group.is_active ? "Activo" : "Inactivo"}</td>
-                    <td>{new Date(group.created_at).toLocaleDateString("es-CO")}</td>
+                    <td>{formatDate(group.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

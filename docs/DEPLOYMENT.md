@@ -50,7 +50,7 @@ Verificar además:
 - `.env.local` y `.dev.vars` no están versionados.
 - No hay claves, JWT ni correos reales en Git.
 - `npm run build` termina sin errores.
-- Las migraciones 1–8 están aplicadas en Supabase.
+- Las migraciones 1–9 están aplicadas en Supabase. La 10 está pendiente y es necesaria antes de desplegar la fase 6.
 - Los buckets `documents-original` y `documents-processed` son privados.
 - El corpus local no se sube al repositorio.
 
@@ -69,7 +69,12 @@ Aplicar en orden:
 202611100001_documents_and_ingestion.sql
 202611110001_document_version_publication.sql
 202611110002_agent_retrieval.sql
+202611120001_audit_events_chain.sql
+202611120002_audit_events_immutable_refs.sql
+202611120003_agent_out_of_scope.sql
 ```
+
+La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
 
 Con CLI:
 
@@ -281,13 +286,13 @@ O desplegar la versión anterior del código.
 
 ### Supabase
 
-- No hay migraciones nuevas en este despliegue provisional.
+- Las migraciones 9 (`audit_events_chain`) y 10 (`audit_events_immutable_refs`) ya están aplicadas. La 11 (`agent_out_of_scope`) está pendiente. Para rollback, conserva la tabla y los datos: no la elimines si ya hay eventos.
 - Antes de cambios de esquema futuros, crear backup o verificar PITR.
 - No borrar tablas ni buckets durante un rollback de aplicación.
 
 ## 9. Limitaciones del despliegue provisional
 
-- Fases 6 y 7 incompletas: auditoría global y simulador pendientes.
+- Fase 6 implementada; migraciones 9 y 10 aplicadas y cadena verificada. Falta aplicar la migración 11 (`out_of_scope`), validar triggers en producción y desplegar. Fase 7 (simulador) pendiente.
 - Sin despliegue público todavía.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
@@ -306,7 +311,8 @@ O desplegar la versión anterior del código.
 - [ ] Deployment Protection desactivado o acceso validado.
 - [ ] Login superadmin y analyst probados.
 - [ ] Consulta RAG con citas y abstención probadas.
-- [ ] Historial y auditoría visibles.
+- [ ] Historial, eventos auditados y reportes visibles.
+- [ ] `verify_audit_chain` responde íntegro y la exportación CSV registra `audit_export`.
 - [ ] Sin secretos en logs, Git ni respuestas del navegador.
 - [ ] Backups y monitoreo revisados.
 - [ ] README y documentación actualizados con la URL final.

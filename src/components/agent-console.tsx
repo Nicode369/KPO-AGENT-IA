@@ -149,7 +149,9 @@ function Answer({ data }: { data: AgentQueryResponse }) {
         ? { className: "agent-tag agent-tag-warn", label: "Solicitud bloqueada" }
         : data.outcome === "rejected"
           ? { className: "agent-tag agent-tag-warn", label: "Consulta rechazada" }
-          : { className: "agent-tag agent-tag-warn", label: "Sin evidencia suficiente" };
+          : data.outcome === "out_of_scope"
+            ? { className: "agent-tag agent-tag-warn", label: "Fuera de alcance" }
+            : { className: "agent-tag agent-tag-warn", label: "Sin evidencia suficiente" };
 
   return (
     <div className="agent-answer" aria-live="polite">

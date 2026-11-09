@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
 import { getSecurityEvents, type SecurityEvent } from "@/lib/admin/security";
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDateTime } from "@/lib/datetime";
 
 export const instant = false;
 
@@ -148,13 +149,4 @@ function controlValue(event: SecurityEvent, key: string): string {
     return event.outcome === "blocked" ? "high" : "medium";
   }
   return "—";
-}
-
-function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
 }

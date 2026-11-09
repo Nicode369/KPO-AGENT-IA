@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { HistoryIcon } from "@/components/icons";
 import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
+import { formatDateTime } from "@/lib/datetime";
 
 export const instant = false;
 
@@ -181,15 +182,6 @@ export default async function HistoryPage() {
       ) : null}
     </main>
   );
-}
-
-function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
 }
 
 function formatLatency(value: number | null): string {

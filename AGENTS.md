@@ -43,7 +43,13 @@ npm run deploy       # requiere npx wrangler login
 - `src/lib/admin/data.ts` — admin queries for groups, invitations and members.
 - `src/lib/admin/documents.ts` — document library/detail queries, signed URLs and labels.
 - `src/lib/admin/audit.ts` — admin query history via service role, scoped by group for `group_admin`.
+- `src/lib/admin/audit-events.ts` — append-only audit events, filters, CSV export data and `verify_audit_chain`.
+- `src/lib/admin/reports.ts` — 24 h overview of outcomes, security alerts, audit chain and documents.
 - `src/app/(workspace)/admin/audit/page.tsx` — global/group-scoped query history for admins.
+- `src/app/(workspace)/admin/audit/events/page.tsx` — audit events, hash-chain verifier and CSV export link.
+- `src/app/(workspace)/admin/reports/page.tsx` — combined audit/operations report.
+- `src/app/api/admin/audit/export/route.ts` — protected CSV export for queries/events; logs `audit_export`.
+- `src/lib/audit/log.ts` — server-side `recordAuditEvent` (never throws; requires service role).
 - `src/lib/agent/` — RAG prompt, citation validation, abstention, security classifier and response types.
 - `src/app/(workspace)/admin/documents/` — document list, detail, review forms and server actions.
 - `src/app/api/admin/documents/` — multipart proxies to the ingestion Worker.
@@ -84,6 +90,10 @@ npm run deploy       # requiere npx wrangler login
 ## Current pending work
 
 - Migrations 6, 7 and 8 are applied remotely. Both private buckets, pgvector and the retrieval/audit RPCs exist.
+- Migrations 9 (`202611120001_audit_events_chain.sql`) and 10 (`202611120002_audit_events_immutable_refs.sql`) are applied remotely. The chain verifies clean after removing the mutable `on delete set null` FKs.
+- Migration 11 (`202611120003_agent_out_of_scope.sql`) is **pending to apply**: it adds `out_of_scope` to the `agent_queries` outcome constraint and migrates legacy rows without relevant sources.
+- Phase 6 is complete: hash-chained `audit_events`, auth/admin/export logging, event viewer, integrity verifier, reports and CSV export. E2E covers the events/reports pages and CSV export.
+- Dates are stored in UTC. Server-rendered UI and CSV exports use `America/Bogota`; date filters treat `from`/`to` as Colombian calendar days.
 - Cloudflare is authenticated. The Worker runs locally on port 8787 and passes `typecheck`, `test`, `dry-run` and `/health`; it is not deployed yet.
 - `INGEST_WORKER_URL` is set in `.env.local` to the local Worker. `npm run ingest:base-drive` completed: 15 documents, 1185 chunks, all published as `common`.
 - OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.

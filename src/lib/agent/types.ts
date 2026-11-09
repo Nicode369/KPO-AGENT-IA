@@ -32,6 +32,7 @@ export type AgentOutcome =
   | "rejected"
   | "blocked"
   | "insufficient_evidence"
+  | "out_of_scope"
   | "error";
 
 export type AgentQueryResponse = {

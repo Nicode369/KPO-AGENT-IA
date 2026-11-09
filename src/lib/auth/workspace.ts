@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { recordAuditEvent } from "@/lib/audit/log";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -73,6 +74,14 @@ export async function requireAdminUser() {
   );
 
   if (!context.profile.is_superadmin && !adminMemberships.length) {
+    await recordAuditEvent({
+      eventType: "authorization_denied",
+      actorId: context.userId,
+      actorEmail: context.profile.email,
+      targetType: "area",
+      targetId: "admin",
+      metadata: { role: "non_admin" },
+    });
     redirect("/app");
   }
 

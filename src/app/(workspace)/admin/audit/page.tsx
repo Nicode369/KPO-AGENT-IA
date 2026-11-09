@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { AuditSubnav } from "@/components/audit-subnav";
 import { HistoryIcon } from "@/components/icons";
 import {
   AUDIT_OUTCOMES,
@@ -16,6 +17,7 @@ import {
 import { getAdminGroups } from "@/lib/admin/data";
 import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDateTime } from "@/lib/datetime";
 
 export const instant = false;
 
@@ -97,6 +99,8 @@ export default async function AdminAuditPage({
           Volver al resumen
         </Link>
       </div>
+
+      <AuditSubnav active="queries" />
 
       {!result.configured ? (
         <section className="admin-panel admin-panel-warning">
@@ -212,6 +216,9 @@ export default async function AdminAuditPage({
                     Limpiar
                   </Link>
                 ) : null}
+                <a className="admin-button admin-button-secondary" href={exportUrl(filters)}>
+                  Exportar CSV
+                </a>
               </div>
             </form>
           </section>
@@ -390,13 +397,15 @@ function auditHref(filters: AuditFilterInput, page: number): string {
   return query ? `/admin/audit?${query}` : "/admin/audit";
 }
 
-function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+function exportUrl(filters: AuditFilterInput): string {
+  const params = new URLSearchParams({ dataset: "queries" });
+  if (filters.q) params.set("q", filters.q);
+  if (filters.outcome) params.set("outcome", filters.outcome);
+  if (filters.groupId) params.set("group", filters.groupId);
+  if (filters.user) params.set("user", filters.user);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  return `/api/admin/audit/export?${params.toString()}`;
 }
 
 function formatLatency(value: number | null): string {

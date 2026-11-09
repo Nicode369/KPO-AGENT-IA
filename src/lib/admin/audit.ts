@@ -1,3 +1,4 @@
+import { bogotaDayEndIso, bogotaDayStartIso } from "@/lib/datetime";
 import { createServiceClient, isServiceRoleConfigured } from "@/lib/supabase/service";
 
 export const AUDIT_PAGE_SIZE = 25;
@@ -7,6 +8,7 @@ export const AUDIT_OUTCOMES = [
   "rejected",
   "blocked",
   "insufficient_evidence",
+  "out_of_scope",
   "error",
 ] as const;
 
@@ -165,11 +167,13 @@ export async function getAuditEvents(
   if (userFilterIds) {
     query = query.in("user_id", userFilterIds);
   }
-  if (normalized.from) {
-    query = query.gte("created_at", `${normalized.from}T00:00:00.000Z`);
+  const fromIso = normalized.from ? bogotaDayStartIso(normalized.from) : null;
+  if (fromIso) {
+    query = query.gte("created_at", fromIso);
   }
-  if (normalized.to) {
-    query = query.lte("created_at", `${normalized.to}T23:59:59.999Z`);
+  const toIso = normalized.to ? bogotaDayEndIso(normalized.to) : null;
+  if (toIso) {
+    query = query.lte("created_at", toIso);
   }
   if (normalized.q) {
     query = query.ilike("question", `%${normalized.q}%`);
@@ -226,6 +230,107 @@ export async function getAuditEvents(
     total: count ?? 0,
     page: safePage,
     pageSize: AUDIT_PAGE_SIZE,
+    error: null,
+  };
+}
+
+export const AUDIT_EXPORT_LIMIT = 5000;
+
+export async function getAuditEventsExport(
+  isSuperadmin: boolean,
+  adminGroupIds: string[],
+  filters: AuditFilterInput,
+): Promise<AuditResult> {
+  const normalized = normalizeAuditFilters(filters, isSuperadmin, adminGroupIds);
+  const empty: AuditResult = {
+    configured: isServiceRoleConfigured(),
+    events: [],
+    sourcesByQuery: {},
+    total: 0,
+    page: 1,
+    pageSize: AUDIT_EXPORT_LIMIT,
+    error: null,
+  };
+
+  if (!isServiceRoleConfigured()) return empty;
+  if (!isSuperadmin && !adminGroupIds.length) return empty;
+
+  const supabase = createServiceClient();
+
+  let userFilterIds: string[] | null = null;
+  if (normalized.user) {
+    if (UUID_PATTERN.test(normalized.user)) {
+      userFilterIds = [normalized.user];
+    } else {
+      const { data: matches } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("email", `%${normalized.user}%`)
+        .limit(50);
+      userFilterIds = ((matches ?? []) as { id: string }[]).map((match) => match.id);
+      if (!userFilterIds.length) return empty;
+    }
+  }
+
+  let query = supabase
+    .from("agent_queries")
+    .select(
+      "id, user_id, group_ids, question, answer, outcome, outcome_reason, abstained, model, prompt_version, latency_ms, source_count, grounding_score, controls, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(AUDIT_EXPORT_LIMIT);
+
+  if (!isSuperadmin) {
+    query = query.overlaps("group_ids", adminGroupIds);
+  }
+  if (normalized.groupId) {
+    query = query.contains("group_ids", [normalized.groupId]);
+  }
+  if (normalized.outcome) {
+    query = query.eq("outcome", normalized.outcome);
+  }
+  if (userFilterIds) {
+    query = query.in("user_id", userFilterIds);
+  }
+  const fromIso = normalized.from ? bogotaDayStartIso(normalized.from) : null;
+  if (fromIso) {
+    query = query.gte("created_at", fromIso);
+  }
+  const toIso = normalized.to ? bogotaDayEndIso(normalized.to) : null;
+  if (toIso) {
+    query = query.lte("created_at", toIso);
+  }
+  if (normalized.q) {
+    query = query.ilike("question", `%${normalized.q}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) return { ...empty, error: error.message };
+
+  const rows = (data ?? []) as Omit<AuditEvent, "user_email" | "user_name">[];
+  const userIds = [...new Set(rows.map((row) => row.user_id))];
+  const { data: profiles } = userIds.length
+    ? await supabase.from("profiles").select("id, email, full_name").in("id", userIds)
+    : { data: [] as { id: string; email: string | null; full_name: string | null }[] };
+
+  const profilesById = new Map(
+    ((profiles ?? []) as { id: string; email: string | null; full_name: string | null }[]).map(
+      (profile) => [profile.id, profile],
+    ),
+  );
+
+  return {
+    configured: true,
+    events: rows.map((row) => ({
+      ...row,
+      controls: row.controls ?? {},
+      user_email: profilesById.get(row.user_id)?.email ?? "Sin correo",
+      user_name: profilesById.get(row.user_id)?.full_name ?? null,
+    })),
+    sourcesByQuery: {},
+    total: rows.length,
+    page: 1,
+    pageSize: AUDIT_EXPORT_LIMIT,
     error: null,
   };
 }

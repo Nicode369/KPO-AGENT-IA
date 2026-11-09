@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { formatDate } from "@/lib/datetime";
+
 import {
   type AdminActionState,
   createGroupAction,
@@ -85,7 +87,7 @@ export function CreateInvitationForm({
           <span>{state.invitationCode.length === 6 ? "Código de 6 caracteres en mayúsculas" : "Código de 48 caracteres en mayúsculas"} (solo se muestra ahora)</span>
           <code>{state.invitationCode}</code>
           {state.invitationExpiresAt ? (
-            <small>Vence el {new Date(state.invitationExpiresAt).toLocaleDateString("es-CO")}</small>
+            <small>Vence el {formatDate(state.invitationExpiresAt)}</small>
           ) : null}
           <CopyCodeButton code={state.invitationCode} />
         </div>

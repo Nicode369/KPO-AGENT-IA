@@ -15,6 +15,7 @@ describe("normalizeAuditOutcome", () => {
     expect(normalizeAuditOutcome("insufficient_evidence")).toBe(
       "insufficient_evidence",
     );
+    expect(normalizeAuditOutcome("out_of_scope")).toBe("out_of_scope");
   });
 
   it("drops unknown outcomes", () => {

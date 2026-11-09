@@ -9,6 +9,7 @@ import {
   GroupsIcon,
   HistoryIcon,
   InvitationIcon,
+  ReportIcon,
   ShieldIcon,
   UsersIcon,
 } from "@/components/icons";
@@ -20,6 +21,7 @@ const items = [
   { href: "/admin/invitations", label: "Invitaciones", icon: InvitationIcon, exact: false },
   { href: "/admin/users", label: "Usuarios", icon: UsersIcon, exact: false },
   { href: "/admin/audit", label: "Auditoría", icon: HistoryIcon, exact: false },
+  { href: "/admin/reports", label: "Reportes", icon: ReportIcon, exact: false },
   { href: "/admin/security", label: "Seguridad", icon: ShieldIcon, exact: false },
 ];
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDate } from "@/lib/datetime";
 import { getAdminGroups } from "@/lib/admin/data";
 import {
   documentStatusLabel,
@@ -232,7 +233,7 @@ export default async function AdminDocumentsPage({
                           </span>
                         </td>
                         <td>{formatBytes(document.size_bytes)}</td>
-                        <td>{new Date(document.updated_at).toLocaleDateString("es-CO")}</td>
+                        <td>{formatDate(document.updated_at)}</td>
                         <td>
                           <Link className="admin-button admin-button-secondary" href={`/admin/documents/${document.id}`}>
                             Revisar

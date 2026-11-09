@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { recordAuditEvent } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -32,12 +33,24 @@ export async function signIn(formData: FormData) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/login?error=credentials");
+  if (error) {
+    await recordAuditEvent({
+      eventType: "auth_login_failed",
+      actorEmail: email,
+      metadata: { reason: "invalid_credentials" },
+    });
+    redirect("/login?error=credentials");
+  }
 
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
   if (typeof userId !== "string") {
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      eventType: "auth_login_blocked",
+      actorEmail: email,
+      metadata: { reason: "missing_session" },
+    });
     redirect("/login?error=inactive");
   }
 
@@ -49,6 +62,12 @@ export async function signIn(formData: FormData) {
 
   if (!profile?.is_active) {
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      eventType: "auth_login_blocked",
+      actorId: userId,
+      actorEmail: email,
+      metadata: { reason: "inactive" },
+    });
     redirect("/login?error=inactive");
   }
 
@@ -63,9 +82,22 @@ export async function signIn(formData: FormData) {
 
     if (!membership) {
       await supabase.auth.signOut();
+      await recordAuditEvent({
+        eventType: "auth_login_blocked",
+        actorId: userId,
+        actorEmail: email,
+        metadata: { reason: "no_membership" },
+      });
       redirect("/login?error=inactive");
     }
   }
+
+  await recordAuditEvent({
+    eventType: "auth_login_success",
+    actorId: userId,
+    actorEmail: email,
+    metadata: { is_superadmin: profile.is_superadmin },
+  });
 
   redirect("/app");
 }
@@ -101,12 +133,18 @@ export async function signUp(formData: FormData) {
 
   // The UI shows a specific, actionable message without exposing account state.
   if (error) {
+    const reason = signUpErrorCode(error);
     console.error("[signUp] Supabase error", {
       code: error.code,
       status: error.status,
       message: error.message,
     });
-    redirect(`/register?error=${signUpErrorCode(error)}`);
+    await recordAuditEvent({
+      eventType: "auth_signup_failed",
+      actorEmail: email,
+      metadata: { reason },
+    });
+    redirect(`/register?error=${reason}`);
   }
   redirect(data.session ? "/app" : "/verify-email");
 }
@@ -122,7 +160,19 @@ export async function requestPasswordReset(formData: FormData) {
   const redirectTo = new URL("/auth/callback?next=/reset-password", origin).toString();
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
-  if (error) redirect("/forgot-password?error=request_failed");
+  if (error) {
+    await recordAuditEvent({
+      eventType: "auth_password_reset_failed",
+      actorEmail: email,
+      metadata: { reason: "request_failed" },
+    });
+    redirect("/forgot-password?error=request_failed");
+  }
+
+  await recordAuditEvent({
+    eventType: "auth_password_reset_requested",
+    actorEmail: email,
+  });
   redirect("/forgot-password?sent=1");
 }
 
@@ -138,8 +188,26 @@ export async function updatePassword(formData: FormData) {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData?.claims?.sub) redirect("/reset-password?error=invalid_link");
 
+  const userId = claimsData.claims.sub;
+  const email =
+    typeof claimsData.claims.email === "string" ? claimsData.claims.email : null;
+
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) redirect("/reset-password?error=update_failed");
+  if (error) {
+    await recordAuditEvent({
+      eventType: "auth_password_update_failed",
+      actorId: userId,
+      actorEmail: email,
+      metadata: { reason: "update_failed" },
+    });
+    redirect("/reset-password?error=update_failed");
+  }
+
+  await recordAuditEvent({
+    eventType: "auth_password_updated",
+    actorId: userId,
+    actorEmail: email,
+  });
 
   await supabase.auth.signOut();
   redirect("/login?updated=1");
@@ -148,7 +216,17 @@ export async function updatePassword(formData: FormData) {
 export async function signOut() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const userId = claimsData?.claims?.sub;
+    const email =
+      typeof claimsData?.claims?.email === "string" ? claimsData.claims.email : null;
+
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      eventType: "auth_logout",
+      actorId: typeof userId === "string" ? userId : null,
+      actorEmail: email,
+    });
   }
   redirect("/login");
 }

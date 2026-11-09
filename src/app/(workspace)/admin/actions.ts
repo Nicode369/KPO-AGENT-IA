@@ -7,6 +7,7 @@ import {
   type MembershipStatus,
   requireAdminUser,
 } from "@/lib/auth/workspace";
+import { bogotaDayEndIso } from "@/lib/datetime";
 
 export type AdminActionState = {
   status: "idle" | "error" | "success";
@@ -77,7 +78,8 @@ export async function createInvitationAction(
     return errorState("Los usos deben ser un número entre 1 y 500.");
   }
 
-  let expiresAt = new Date(`${expires}T23:59:59.999Z`);
+  const expiresIso = bogotaDayEndIso(expires);
+  let expiresAt = new Date(expiresIso ?? expires);
   const now = new Date();
   const maxExpiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
   if (Number.isNaN(expiresAt.getTime()) || expiresAt <= now) {

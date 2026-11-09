@@ -94,6 +94,17 @@ export function ShieldIcon({ className, size = 18 }: IconProps) {
   );
 }
 
+export function ReportIcon({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...frame(size)} className={className}>
+      <path d="M4 20h16" />
+      <rect x="6" y="12" width="3" height="6" rx="0.6" />
+      <rect x="11" y="8" width="3" height="10" rx="0.6" />
+      <rect x="16" y="4" width="3" height="14" rx="0.6" />
+    </svg>
+  );
+}
+
 export function DocumentIcon({ className, size = 18 }: IconProps) {
   return (
     <svg {...frame(size)} className={className}>

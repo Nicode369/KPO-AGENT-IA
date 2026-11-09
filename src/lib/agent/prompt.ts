@@ -3,6 +3,8 @@ import type { AgentSource, RetrievedChunk } from "./types";
 export const PROMPT_VERSION = "rag-es-v1";
 export const ABSTENTION_TEXT =
   "No tengo evidencia suficiente en los documentos publicados para responder.";
+export const OUT_OF_SCOPE_TEXT =
+  "Esta consulta está fuera del alcance de los documentos publicados. Solo puedo responder sobre la normativa y los documentos autorizados de tu grupo.";
 
 const MAX_CONTEXT_CHARS = 14000;
 const MAX_CHUNK_CHARS = 2800;

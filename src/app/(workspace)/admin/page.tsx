@@ -62,6 +62,8 @@ export default async function AdminHomePage() {
         </p>
         <div className="admin-actions">
           <Link className="admin-button" href="/admin/audit">Ver historial de consultas</Link>
+          <Link className="admin-button admin-button-secondary" href="/admin/audit/events">Ver eventos auditados</Link>
+          <Link className="admin-button admin-button-secondary" href="/admin/reports">Ver reportes</Link>
           <Link className="admin-button admin-button-secondary" href="/admin/security">Ver alertas de seguridad</Link>
         </div>
       </section>

@@ -79,6 +79,28 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByText("Consultas en 24 h")).toBeVisible();
     await expectNoNextRuntimeError(page);
 
+    await page.goto("/admin/audit/events");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Eventos de auditoría" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Exportar CSV" })).toBeVisible();
+    await expect(page.getByText("Auditoría no configurada")).toHaveCount(0);
+    await expectNoNextRuntimeError(page);
+
+    await page.goto("/admin/reports");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Reportes" }),
+    ).toBeVisible();
+    await expect(page.getByText("Integridad de la cadena")).toBeVisible();
+    await expectNoNextRuntimeError(page);
+
+    const exportResponse = await page.request.get(
+      "/api/admin/audit/export?dataset=events",
+    );
+    expect(exportResponse.status()).toBe(200);
+    expect(exportResponse.headers()["content-type"]).toContain("text/csv");
+    expect(await exportResponse.text()).toContain("Fecha");
+
     await page.goto("/admin/security");
     await expect(
       page.getByRole("heading", { level: 1, name: "Intentos bloqueados y rechazados" }),

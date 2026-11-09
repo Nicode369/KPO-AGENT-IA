@@ -216,7 +216,10 @@ sequenceDiagram
     W-->>API: embedding
     API->>DB: match_document_chunks (RLS)
     DB-->>API: chunks publicados autorizados
-    alt evidencia insuficiente
+    alt sin fuentes relevantes
+      API->>DB: registra outcome out_of_scope
+      API-->>UI: respuesta fuera de alcance
+    else evidencia insuficiente
       API->>DB: registra abstención
       API-->>UI: abstención sin fuentes
     else evidencia suficiente
@@ -378,6 +381,7 @@ erDiagram
 | `document_events` | Ciclo de vida documental |
 | `agent_queries` | Auditoría de preguntas, respuestas y resultados |
 | `agent_query_sources` | Fragmentos usados como evidencia |
+| `audit_events` | Cadena global append-only con hash SHA-256, actor, grupo, objetivo y metadatos; `actor_id`/`group_id` sin FK para preservar la inmutabilidad |
 
 ### Buckets
 
@@ -402,11 +406,12 @@ Ambos son privados. Las políticas de Storage validan el grupo en la ruta `origi
 | Cargar/procesar documentos | Global | Su grupo | ❌ | ❌ |
 | Aprobar/publicar/retirar | Global | Su grupo | ❌ | ❌ |
 | Ver todas las versiones | Global | Su grupo | ❌ | ❌ |
-| Auditoría global / reportes | 🚧 Fase 6 | 🚧 Fase 6 | 🚧 Fase 6 | ❌ |
-| Seguimiento de actividad | 🚧 Fase 6 | 🚧 Fase 6 | 🚧 Fase 6 | ❌ |
+| Eventos auditados y verificación de cadena | Global | Su grupo | ❌ | ❌ |
+| Reportes operativos / exportación CSV | Global | Su grupo | ❌ | ❌ |
+| Seguimiento de actividad | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
 | Ejecutar simulador | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
 
-`supervisor` todavía no tiene un flujo administrativo propio; actualmente consulta como `analyst`. Las capacidades de revisión, seguimiento y pruebas se completarán en las fases 6 y 7.
+`supervisor` todavía no tiene un flujo administrativo propio; actualmente consulta como `analyst`. Las capacidades de revisión, seguimiento y pruebas se completarán en la fase 7.
 
 ## 9. API
 
@@ -453,7 +458,8 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 - Revocación de sesiones mediante `sessions_revoked_at`.
 - Buckets privados y URLs firmadas de corta duración.
 - Validación de archivos por extensión, MIME, firma y tamaño.
-- Hash SHA-256 para duplicados y para auditoría de preguntas/respuestas.
+- Hash SHA-256 para duplicados, auditoría de preguntas/respuestas y cadena global `audit_events`.
+- Exportaciones CSV solo para administradores, acotadas por grupo y registradas en la cadena.
 - Clasificador de seguridad del agente.
 - Rate limit de 20 consultas/minuto.
 - Contador y citas obligatorias.
@@ -462,7 +468,7 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 
 ### Riesgos pendientes
 
-- Fase 6: cadena de hashes global y verificador de integridad.
+- Fase 6: aplicar la migración 11 (`agent_out_of_scope`). Las migraciones 9 y 10 ya están aplicadas y la cadena verifica correctamente.
 - Fase 7: simulador de seguridad y evaluación sistemática.
 - Rate limit no probado con carga concurrente.
 - OCR de DOCX con imágenes embebidas no implementado.
@@ -481,14 +487,16 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 | Mistral Small 3.1 Vision | OCR de PDFs escaneados con buena relación calidad/costo |
 | Publicación explícita | Evita que borradores o versiones en revisión lleguen al agente |
 | Citas obligatorias + abstención | Reduce alucinaciones y facilita verificación |
+| `out_of_scope` separado de evidencia insuficiente | Distingue preguntas sin documentos relacionados de respuestas con contexto que no alcanza |
+| UTC en base, `America/Bogota` en UI y CSV | Evita ambigüedad al almacenar y muestra horas locales colombianas |
 | RPCs para administración | Evita exponer tablas completas y centraliza reglas |
 | CSS propio | Control visual fino; Tailwind queda como dependencia de integración, no como sistema de utilidades |
 | `connection()` en páginas privadas | Evita prerender con sesión y valores inestables de Next.js 16 |
 
 ## 12. Estado y evolución
 
-- Fases 1–5 implementadas y verificadas en local.
-- Fase 6 parcial: auditoría de consultas y eventos documentales; falta auditoría global.
+- Fases 1–6 implementadas en local.
+- Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9 y 10 aplicadas y migración 11 pendiente para `out_of_scope`.
 - Fase 7 pendiente: simulador y métricas.
 - Fase 8 en preparación: despliegue Vercel + Cloudflare + Supabase.
 - El corpus de validación local tiene 15 documentos y 1.185 fragmentos, todos publicados como `common`; no se versiona en Git.

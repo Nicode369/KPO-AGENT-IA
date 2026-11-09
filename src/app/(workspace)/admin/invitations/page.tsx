@@ -2,6 +2,7 @@ import { connection } from "next/server";
 
 import { CopyCodeButton, CreateInvitationForm, RevokeInvitationForm } from "../admin-forms";
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { formatDate } from "@/lib/datetime";
 import { getAdminGroups, getAdminInvitations, getDefaultInvitationExpiry, roleLabel } from "@/lib/admin/data";
 
 export const instant = false;
@@ -79,7 +80,7 @@ export default async function AdminInvitationsPage() {
                       </td>
                       <td>{roleLabel(invitation.role)}</td>
                       <td>{invitation.use_count} / {invitation.max_uses}</td>
-                      <td>{new Date(invitation.expires_at).toLocaleDateString("es-CO")}</td>
+                      <td>{formatDate(invitation.expires_at)}</td>
                       <td><span className={`admin-tag ${status === "Vigente" ? "admin-tag-ok" : "admin-tag-muted"}`}>{status}</span></td>
                       <td>
                         {status === "Vigente" ? (

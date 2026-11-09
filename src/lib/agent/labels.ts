@@ -3,6 +3,7 @@ export const OUTCOME_LABELS: Record<string, string> = {
   rejected: "Rechazada",
   blocked: "Bloqueada",
   insufficient_evidence: "Evidencia insuficiente",
+  out_of_scope: "Fuera de alcance",
   error: "Error",
 };
 
@@ -11,11 +12,13 @@ export const OUTCOME_TONES: Record<string, string> = {
   rejected: "admin-tag-error",
   blocked: "admin-tag-error",
   insufficient_evidence: "admin-tag-warn",
+  out_of_scope: "admin-tag-warn",
   error: "admin-tag-error",
 };
 
 export const REASON_LABELS: Record<string, string> = {
   no_authorized_sources: "No se encontraron fuentes autorizadas suficientes.",
+  no_relevant_sources: "No hay documentos publicados relacionados con la consulta.",
   model_abstained: "El modelo determinó que la evidencia era insuficiente.",
   citation_validation_failed: "La respuesta no incluyó citas válidas.",
   invalid_question: "La pregunta no cumplía el formato permitido.",

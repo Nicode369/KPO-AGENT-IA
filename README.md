@@ -55,7 +55,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 3 | Base de datos, Auth, invitaciones, roles y RLS | ✅ Completada |
 | 4 | Gestión documental, OCR, publicación y versionado | ✅ Completada en local |
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
-| 6 | Auditoría y trazabilidad ampliada | 🚧 Parcial: `agent_queries`, `agent_query_sources`, `document_events`, hashes, historial personal y visor administrativo `/admin/audit`; falta cadena de hashes global, reportes y verificador |
+| 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9 y 10 aplicadas y verificadas |
 | 7 | Simulador de pruebas | ⏳ Pendiente |
 | 8 | Integración y despliegue | 🚧 En preparación: código y documentación listos; falta publicar Worker, Vercel y configurar Auth/redirects |
 
@@ -105,6 +105,9 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 - Límite de 20 consultas por minuto por usuario.
 - Historial personal en `/app/history` con resultado, modelo, latencia, grounding y fuentes.
 - Auditoría en `agent_queries` y `agent_query_sources`, incluyendo hashes de pregunta y respuesta.
+- Cadena global append-only `audit_events` con SHA-256: cada evento enlaza el hash anterior.
+- Registro de login/logout, fallos de autenticación, cambios administrativos, ciclo documental, denegaciones de acceso, exportaciones y verificaciones de integridad.
+- Verificador de cadena y visor filtrable en `/admin/audit/events` para superadmin y `group_admin`.
 
 ### Administración
 
@@ -114,6 +117,8 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 - `/admin/documents`: cargar, procesar, revisar, aprobar, publicar, retirar y versionar.
 - `/admin/documents/[id]`: detalle de versiones, fragmentos, accesos, eventos y errores.
 - `/admin/audit`: historial global de consultas para superadmin y acotado a sus grupos para `group_admin`, con filtros por resultado, grupo, usuario, fechas y texto.
+- `/admin/audit/events`: eventos auditados de la cadena SHA-256, filtros por tipo, grupo, actor y fecha, exportación CSV y verificación de integridad.
+- `/admin/reports`: resumen 24 h de resultados del agente, alertas de seguridad, estado de la cadena, documentos por estado y exportaciones.
 - `/admin/security`: intentos bloqueados y rechazados de los grupos administrados.
 - Panel de resumen con miembros, invitaciones, documentos, consultas y alertas.
 - Contador global de fragmentos indexados.
@@ -328,8 +333,11 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | 6 | `202611100001_documents_and_ingestion.sql` | Documentos, versiones, chunks, pgvector, eventos, buckets y RPCs |
 | 7 | `202611110001_document_version_publication.sql` | `published_version_id`, RLS por versión y publicación/retiro |
 | 8 | `202611110002_agent_retrieval.sql` | `match_document_chunks`, `agent_queries` y `agent_query_sources` |
+| 9 | `202611120001_audit_events_chain.sql` | `audit_events` append-only, cadena SHA-256, `append_audit_event`, `verify_audit_chain` y disparadores |
+| 10 | `202611120002_audit_events_immutable_refs.sql` | Elimina las FKs mutables de `audit_events` y repara eventos afectados por borrados |
+| 11 | `202611120003_agent_out_of_scope.sql` | Añade el resultado `out_of_scope` y migra consultas sin fuentes relevantes |
 
-Las migraciones 1–8 están aplicadas en el proyecto remoto usado durante el desarrollo. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
+Las migraciones 1–10 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);` y la 10 dejó la cadena íntegra. La migración 11 está **pendiente de aplicar** y es necesaria antes de desplegar el nuevo resultado `out_of_scope`. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
 
 ## Rutas de la aplicación
 
@@ -346,7 +354,10 @@ Las migraciones 1–8 están aplicadas en el proyecto remoto usado durante el de
 | `/admin/documents` | Superadmin / `group_admin` | Biblioteca y carga documental |
 | `/admin/documents/[id]` | Superadmin / `group_admin` | Detalle, versiones, fragmentos y eventos |
 | `/admin/audit` | Superadmin / `group_admin` | Historial global o acotado a sus grupos |
+| `/admin/audit/events` | Superadmin / `group_admin` | Eventos append-only, verificación y exportación |
+| `/admin/reports` | Superadmin / `group_admin` | Reportes operativos y de auditoría |
 | `/admin/security` | Superadmin / `group_admin` | Intentos bloqueados y rechazados |
+| `/api/admin/audit/export` | Admin | Descarga CSV de consultas o eventos |
 | `/api/agent/query` | Usuario activo | Consulta RAG |
 | `/api/admin/documents/upload` | Superadmin / `group_admin` | Proxy multipart al Worker |
 | `/api/admin/documents/[id]/versions` | Superadmin / `group_admin` | Nueva versión |
@@ -373,6 +384,7 @@ Las migraciones 1–8 están aplicadas en el proyecto remoto usado durante el de
 | `POST` | `/api/agent/query` | Sesión activa | Clasificación, rate limit, RAG, citas y auditoría |
 | `POST` | `/api/admin/documents/upload` | Admin | Reenvía multipart al Worker |
 | `POST` | `/api/admin/documents/[id]/versions` | Admin | Reenvía nueva versión al Worker |
+| `GET` | `/api/admin/audit/export` | Admin | CSV de consultas o eventos; registra `audit_export` |
 
 ## Modelo de datos
 
@@ -412,10 +424,11 @@ erDiagram
 | Publicar/retirar versiones | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Revocar sesiones | ✅ | ❌ | ❌ | ❌ |
 | Historial de consultas administrativo | ✅ Global | ✅ Su grupo | ❌ | ❌ |
-| Auditoría global / reportes | 🚧 Fase 6 | 🚧 Fase 6 | 🚧 Fase 6 | ❌ |
+| Eventos auditados, reportes y exportación CSV | ✅ Global | ✅ Su grupo | ❌ | ❌ |
+| Verificar cadena de auditoría | ✅ | ✅ | ❌ | ❌ |
 | Simulador | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
 
-Hoy `supervisor` y `analyst` comparten el acceso de consulta. Las capacidades de seguimiento de actividad y ejecución de pruebas del supervisor llegarán con las fases 6 y 7.
+Hoy `supervisor` y `analyst` comparten el acceso de consulta. El seguimiento ampliado del supervisor y la ejecución de pruebas llegarán con la fase 7.
 
 ## Seguridad
 
@@ -426,15 +439,17 @@ Hoy `supervisor` y `analyst` comparten el acceso de consulta. Las capacidades de
 - **Aislamiento por grupo:** documentos, chunks, Storage y consultas se filtran por grupo.
 - **Storage privado:** buckets sin acceso público; el frontend solo recibe URLs firmadas de corta duración.
 - **Secretos:** `SUPABASE_SERVICE_ROLE_KEY` y tokens de Cloudflare viven solo en servidor/Worker. `.env.local`, `.dev.vars` y archivos de claves están ignorados.
-- **Agente:** clasificador determinista, citas obligatorias, abstención, rate limit de 20 consultas/minuto y bloqueo de extracción masiva.
-- **Auditoría:** hashes SHA-256 de pregunta/respuesta, fuentes recuperadas, modelo, latencia y grounding en `agent_queries`.
+- **Agente:** clasificador determinista, citas obligatorias, abstención, rate limit de 20 consultas/minuto y bloqueo de extracción masiva. Distingue `out_of_scope` (sin fuentes publicadas relevantes) de `insufficient_evidence` (hay fuentes, pero no alcanzan o no se citan).
+- **Fechas:** la base guarda UTC; la UI y los CSV muestran `America/Bogota`, y los filtros por día interpretan el día colombiano.
+- **Auditoría:** hashes SHA-256 de pregunta/respuesta, fuentes recuperadas, modelo, latencia y grounding en `agent_queries`; cadena global append-only `audit_events` con verificación de integridad y exportaciones registradas.
+- **Exportaciones:** CSV solo para administradores, acotado a sus grupos y con `content-disposition` de descarga; cada exportación se audita.
 - **Git:** repositorio privado; el historial fue escaneado para descartar claves, JWT, correos y URLs reales.
 
 ## Pruebas
 
 | Suite | Comando | Cobertura |
 | --- | --- | --- |
-| Web unitarias | `npm test` | 14 tests: prompt, seguridad, citas y conteo de fragmentos |
+| Web unitarias | `npm test` | 56 tests: prompt, seguridad, outcomes, auditoría, eventos, CSV, fechas y conteo de fragmentos |
 | Worker | `cd workers/kpo-ingest && npm test` | 16 tests: OCR, archivos, chunking y documentos |
 | E2E | `npm run test:e2e` | 2 tests: autenticación y rutas privadas sin overlays de Next |
 | Lint | `npm run lint` | ESLint + reglas de Next |
@@ -449,7 +464,7 @@ npm run dev
 npm run test:e2e
 ```
 
-Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit` y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js.
+Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit`, `/admin/audit/events`, `/admin/reports`, la descarga CSV y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js. Los nuevos checks requieren `SUPABASE_SERVICE_ROLE_KEY` y las migraciones 9 y 10 aplicadas.
 
 ## Despliegue
 
@@ -473,7 +488,9 @@ Resumen:
 
 ## Limitaciones conocidas
 
-- **Fases 6 y 7 incompletas:** el visor de historial administrativo ya existe; faltan cadena de hashes append-only, reportes, exportación, verificador y simulador.
+- **Migración 10 pendiente:** corrige las FKs mutables de `audit_events` y repara la cadena tras borrar grupos; debe aplicarse antes de desplegar.
+- **Sin backfill de auditoría:** la migración 9 no reconstruye eventos anteriores; la cadena empieza a registrar desde su aplicación.
+- **Fase 7 pendiente:** falta el simulador de pruebas.
 - **Sin despliegue todavía:** no hay URL pública; `APP_ORIGIN` e `INGEST_WORKER_URL` apuntan a local.
 - **OCR síncrono:** el procesamiento ocurre dentro del request; `maxDuration = 60` puede ser insuficiente para PDFs muy grandes.
 - **Límite de Vercel:** el proxy multipart puede limitar cuerpos grandes (~4.5 MB). El corpus actual está por debajo; para documentos mayores conviene cola o carga directa.
@@ -486,7 +503,7 @@ Resumen:
 
 ## Fases pendientes
 
-1. **Fase 6 — Auditoría y trazabilidad:** visor `/admin/audit` implementado; falta `audit_events` append-only con cadena SHA-256, eventos de login/logout/fallos, cambios administrativos, reportes, exportación y verificador.
+1. **Fase 6 — Auditoría y trazabilidad:** completada (cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV); migraciones 9 y 10 aplicadas y cadena verificada. La migración 11 añade `out_of_scope` y queda pendiente de aplicar.
 2. **Fase 7 — Simulador:** tablas `simulator_cases`, `simulator_runs`, `simulator_results`; reutilización de `runAgentQuery`; UI `/admin/simulator`; métricas de acierto, abstención, citas y latencia; ejecución por lotes.
 3. **Fase 8 — Cierre:** desplegar Worker y app, configurar Auth/redirects, backups, monitoreo, smoke tests y documentación final.
 4. **Mejoras operativas:** mover OCR a cola, probar rate limit con carga, añadir SMTP si se requiere verificación real y ampliar E2E a flujos de grupo.
