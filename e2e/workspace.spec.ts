@@ -31,6 +31,8 @@ test.describe("authenticated workspace", () => {
 
     await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByText("Grupos disponibles")).toBeVisible();
+    await expect(page.getByLabel("Grupo activo")).toBeVisible();
     await expectNoNextRuntimeError(page);
 
     await page.goto("/app/history");

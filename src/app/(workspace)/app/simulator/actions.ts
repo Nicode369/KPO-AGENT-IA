@@ -82,14 +82,20 @@ async function validatedInput(formData: FormData) {
   if (expectedDocumentId) {
     const { data: document, error } = await context.supabase
       .from("documents")
-      .select("group_id")
+      .select("group_id, visibility, status")
       .eq("id", expectedDocumentId)
-      .maybeSingle<{ group_id: string }>();
+      .maybeSingle<{ group_id: string; visibility: string; status: string }>();
     if (error) return { ok: false as const, message: "No se pudo validar el documento." };
-    if (!document || document.group_id !== groupId) {
+    if (!document || document.status !== "published") {
       return {
         ok: false as const,
-        message: "El documento esperado no pertenece a ese grupo.",
+        message: "El documento esperado debe estar publicado.",
+      };
+    }
+    if (document.group_id !== groupId && document.visibility !== "common") {
+      return {
+        ok: false as const,
+        message: "El documento esperado no está accesible para ese grupo.",
       };
     }
   }

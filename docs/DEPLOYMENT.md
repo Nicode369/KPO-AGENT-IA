@@ -50,7 +50,7 @@ Verificar además:
 - `.env.local` y `.dev.vars` no están versionados.
 - No hay claves, JWT ni correos reales en Git.
 - `npm run build` termina sin errores.
-- Las migraciones 1–11 están aplicadas en Supabase. La 12 (`simulator.sql`) está pendiente y es necesaria antes de usar el simulador.
+- Las migraciones 1–12 están aplicadas en Supabase, incluida la 12 (`simulator.sql`).
 - Los buckets `documents-original` y `documents-processed` son privados.
 - El corpus local no se sube al repositorio.
 
@@ -287,13 +287,13 @@ O desplegar la versión anterior del código.
 
 ### Supabase
 
-- Las migraciones 9 (`audit_events_chain`), 10 (`audit_events_immutable_refs`) y 11 (`agent_out_of_scope`) ya están aplicadas. La 12 (`simulator`) está pendiente. Para rollback, conserva las tablas y los datos: no elimines `audit_events` si ya hay eventos.
+- Las migraciones 9 (`audit_events_chain`), 10 (`audit_events_immutable_refs`), 11 (`agent_out_of_scope`) y 12 (`simulator`) ya están aplicadas. Para rollback, conserva las tablas y los datos: no elimines `audit_events` si ya hay eventos.
 - Antes de cambios de esquema futuros, crear backup o verificar PITR.
 - No borrar tablas ni buckets durante un rollback de aplicación.
 
 ## 9. Limitaciones del despliegue provisional
 
-- Fases 6 y 7 implementadas; migraciones 9, 10 y 11 aplicadas y cadena verificada. Falta aplicar la migración 12 (`simulator.sql`) y desplegar.
+- Fases 6 y 7 implementadas; migraciones 9–12 aplicadas y cadena verificada. Falta completar el despliegue y los smoke tests de producción.
 - Sin despliegue público todavía.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.

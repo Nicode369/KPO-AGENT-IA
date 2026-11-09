@@ -1402,6 +1402,22 @@ button {
   white-space: nowrap;
 }
 
+.group-context-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.group-context-form .admin-field {
+  flex: 1 1 240px;
+}
+
 .workspace-actions {
   display: flex;
   flex-wrap: wrap;

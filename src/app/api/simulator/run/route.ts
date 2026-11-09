@@ -5,6 +5,7 @@ import { runAgentQuery } from "@/lib/agent/run";
 import type { AgentQueryResponse } from "@/lib/agent/types";
 import { getApiWorkspace, type ApiWorkspace } from "@/lib/auth/api";
 import { canAccessSimulator } from "@/lib/auth/simulator";
+import { getPublishedDocumentIdsForGroup } from "@/lib/documents/retrieval";
 import { evaluateAgentResponse, summarizeSimulatorResults } from "@/lib/simulator/metrics";
 import type { SimulatorExpectedOutcome, SimulatorResult } from "@/lib/simulator/types";
 
@@ -173,11 +174,11 @@ async function runCase(
     return fail(409, "case_already_run", "Ese caso ya fue ejecutado en este lote.");
   }
 
-  const { data: groupDocuments, error: documentsError } = await context.supabase
-    .from("documents")
-    .select("id")
-    .eq("group_id", run.value.group_id);
-  if (documentsError) {
+  const groupDocuments = await getPublishedDocumentIdsForGroup(
+    context.supabase,
+    run.value.group_id,
+  );
+  if (!groupDocuments.ok) {
     return fail(500, "documents_failed", "No se pudieron cargar los documentos del grupo.");
   }
 
@@ -187,7 +188,7 @@ async function runCase(
     userId: context.userId,
     groupIds: [run.value.group_id],
     question: caseData.question,
-    documentIds: (groupDocuments ?? []).map((document) => document.id),
+    documentIds: groupDocuments.ids,
     enforceRateLimit: false,
     recordHistory: false,
   });

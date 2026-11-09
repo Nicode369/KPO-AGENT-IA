@@ -7,7 +7,7 @@ Aplicación web para consulta documental en auditoría, contabilidad y cumplimie
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20pgvector-3ecf8e?logo=supabase)](https://supabase.com/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Workers%20AI-f38020?logo=cloudflare)](https://workers.cloudflare.com/)
-[![Tests](https://img.shields.io/badge/tests-30%20unitarios%20%2B%202%20E2E-2ea44f)](#pruebas)
+[![Tests](https://img.shields.io/badge/tests-68%20unitarios%20%2B%202%20E2E-2ea44f)](#pruebas)
 
 - **Repositorio:** <https://github.com/Nicode369/KPO-AGENT-IA>
 - **Arquitectura detallada:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
@@ -56,7 +56,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 4 | Gestión documental, OCR, publicación y versionado | ✅ Completada en local |
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
 | 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9, 10 y 11 aplicadas y verificadas |
-| 7 | Simulador de pruebas | ✅ Implementada en local: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 pendiente de aplicar |
+| 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
 | 8 | Integración y despliegue | 🚧 En preparación: código y documentación listos; falta publicar Worker, Vercel y configurar Auth/redirects |
 
 El repositorio incluye una validación local con **15 documentos, 1.185 fragmentos, todos publicados como `common`**. Ese corpus no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`.
@@ -72,6 +72,7 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 - Roles `group_admin`, `supervisor` y `analyst`, más `superadmin`.
 - Membresías activas, pendientes y deshabilitadas.
 - Revocación de sesiones para superadministradores.
+- El superadmin elige un grupo activo; las consultas se registran y auditan en ese grupo sin exigir una membresía.
 - RLS y RPCs `security definer` para administración; ocultar botones no sustituye los controles de servidor.
 
 ### Gestión documental
@@ -93,6 +94,7 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 ### Agente RAG
 
 - Recuperación semántica restringida por grupo y por versión publicada.
+- Para el superadmin, la recuperación usa el grupo activo seleccionado en `/app` más los documentos `common`; la consulta queda asociada a ese `group_id`.
 - Respuesta en español basada solo en el contexto recuperado.
 - Citas obligatorias a fragmentos, documento, versión y página.
 - Abstención explícita cuando la evidencia es insuficiente.
@@ -338,7 +340,7 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | 11 | `202611120003_agent_out_of_scope.sql` | Añade el resultado `out_of_scope` y migra consultas sin fuentes relevantes |
 | 12 | `202611120004_simulator.sql` | Casos, ejecuciones y resultados del simulador con RLS por grupo |
 
-Las migraciones 1–11 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra y la 11 habilitó `out_of_scope`. La migración 12 (`simulator.sql`) está **pendiente de aplicar** y es necesaria antes de usar el simulador en remoto. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
+Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra, la 11 habilitó `out_of_scope` y la 12 creó las tablas del simulador. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
 
 ## Rutas de la aplicación
 
@@ -346,7 +348,7 @@ Las migraciones 1–11 están aplicadas en el proyecto remoto usado durante el d
 | --- | --- | --- |
 | `/` | Público | Landing |
 | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | Público | Flujos de autenticación |
-| `/app` | Usuario activo | Dashboard y consola del agente |
+| `/app` | Usuario activo | Dashboard, consola del agente y selector de grupo activo para superadmin |
 | `/app/history` | Usuario activo | Historial personal de consultas |
 | `/app/simulator` | Superadmin / `group_admin` / `supervisor` | Casos, ejecución y métricas del simulador |
 | `/admin` | Superadmin / `group_admin` | Resumen administrativo |
@@ -440,7 +442,7 @@ erDiagram
 - **Autorización en servidor:** `requireWorkspaceUser` y `requireAdminUser` validan perfil activo, membresía, rol y revocación de sesión.
 - **RLS:** todas las lecturas sensibles se limitan en PostgreSQL; los usuarios normales solo ven la versión publicada de documentos autorizados.
 - **RPCs `security definer`:** invitaciones, membresías, publicación y auditoría se ejecutan mediante funciones con permisos controlados.
-- **Aislamiento por grupo:** documentos, chunks, Storage y consultas se filtran por grupo.
+- **Aislamiento por grupo:** documentos, chunks, Storage y consultas se filtran por grupo. El superadmin opera con un grupo activo persistido en cookie `httpOnly`, validado en servidor.
 - **Storage privado:** buckets sin acceso público; el frontend solo recibe URLs firmadas de corta duración.
 - **Secretos:** `SUPABASE_SERVICE_ROLE_KEY` y tokens de Cloudflare viven solo en servidor/Worker. `.env.local`, `.dev.vars` y archivos de claves están ignorados.
 - **Agente:** clasificador determinista, citas obligatorias, abstención, rate limit de 20 consultas/minuto y bloqueo de extracción masiva. Distingue `out_of_scope` (sin fuentes publicadas relevantes) de `insufficient_evidence` (hay fuentes, pero no alcanzan o no se citan).
@@ -493,7 +495,6 @@ Resumen:
 ## Limitaciones conocidas
 
 - **Sin backfill de auditoría:** la migración 9 no reconstruye eventos anteriores; la cadena empieza a registrar desde su aplicación.
-- **Migración 12 pendiente:** crea las tablas del simulador; debe aplicarse antes de usar `/app/simulator` en remoto.
 - **Sin despliegue todavía:** no hay URL pública; `APP_ORIGIN` e `INGEST_WORKER_URL` apuntan a local.
 - **OCR síncrono:** el procesamiento ocurre dentro del request; `maxDuration = 60` puede ser insuficiente para PDFs muy grandes.
 - **Límite de Vercel:** el proxy multipart puede limitar cuerpos grandes (~4.5 MB). El corpus actual está por debajo; para documentos mayores conviene cola o carga directa.
@@ -507,7 +508,7 @@ Resumen:
 ## Fases pendientes
 
 1. **Fase 6 — Auditoría y trazabilidad:** completada (cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV); migraciones 9, 10 y 11 aplicadas y cadena verificada.
-2. **Fase 7 — Simulador:** implementada en local con tablas `simulator_cases`, `simulator_runs`, `simulator_results`, reutilización de `runAgentQuery`, UI `/app/simulator`, métricas de acierto/abstención/citas/términos/latencia y ejecución por lotes. Falta aplicar la migración 12 en Supabase.
+2. **Fase 7 — Simulador:** implementada con tablas `simulator_cases`, `simulator_runs`, `simulator_results`, reutilización de `runAgentQuery`, UI `/app/simulator`, métricas de acierto/abstención/citas/términos/latencia y ejecución por lotes. Migración 12 aplicada; el simulador usa documentos publicados propios y comunes del grupo.
 3. **Fase 8 — Cierre:** desplegar Worker y app, configurar Auth/redirects, backups, monitoreo, smoke tests y documentación final.
 4. **Mejoras operativas:** mover OCR a cola, probar rate limit con carga, añadir SMTP si se requiere verificación real y ampliar E2E a flujos de grupo.
 

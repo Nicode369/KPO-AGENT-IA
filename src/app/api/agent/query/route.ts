@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { runAgentQuery } from "@/lib/agent/run";
 import { getApiWorkspace } from "@/lib/auth/api";
+import { getSuperadminGroupContext } from "@/lib/auth/group-context";
+import { getPublishedDocumentIdsForGroup } from "@/lib/documents/retrieval";
 
 export const maxDuration = 60;
 
@@ -23,11 +25,40 @@ export async function POST(request: Request) {
       ? (body as { question: string }).question
       : "";
 
+  let groupIds = context.value.groupIds;
+  let documentIds: string[] | undefined;
+
+  if (context.value.isSuperadmin) {
+    const groupContext = await getSuperadminGroupContext(
+      context.value.supabase,
+      true,
+    );
+
+    if (groupContext.activeGroup) {
+      groupIds = [groupContext.activeGroup.id];
+      const documents = await getPublishedDocumentIdsForGroup(
+        context.value.supabase,
+        groupContext.activeGroup.id,
+      );
+
+      if (!documents.ok) {
+        return fail(
+          500,
+          "documents_failed",
+          "No se pudieron cargar los documentos del grupo activo.",
+        );
+      }
+
+      documentIds = documents.ids;
+    }
+  }
+
   const result = await runAgentQuery({
     supabase: context.value.supabase,
     token: context.value.token,
     userId: context.value.userId,
-    groupIds: context.value.groupIds,
+    groupIds,
+    documentIds,
     question,
     enforceRateLimit: true,
     recordHistory: true,

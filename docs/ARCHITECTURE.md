@@ -127,6 +127,8 @@ sequenceDiagram
   - `sessions_revoked_at` contra `iat`;
   - al menos una membresía activa, salvo superadmin.
 - `requireAdminUser()` exige `is_superadmin` o rol `group_admin`.
+- `getSuperadminGroupContext()` resuelve el grupo activo del superadmin desde la cookie `httpOnly` `kpo_active_group`; si falta o no es válida, usa KPO o el primer grupo disponible.
+- La consulta del agente para superadmin se limita a documentos publicados del grupo activo más los `common`, y registra `agent_queries.group_ids = [grupo_activo]`.
 - La autorización de datos se repite en PostgreSQL con RLS.
 
 ### Invitaciones
@@ -470,7 +472,7 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 ### Riesgos pendientes
 
 - Fase 6: migraciones 9, 10 y 11 aplicadas; la cadena verifica correctamente.
-- Fase 7: aplicar la migración 12 (`simulator.sql`) antes de usar el simulador en remoto.
+- Fase 7: migración 12 (`simulator.sql`) aplicada; el simulador usa documentos publicados propios y comunes del grupo.
 - Rate limit no probado con carga concurrente.
 - OCR de DOCX con imágenes embebidas no implementado.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
@@ -498,7 +500,7 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 
 - Fases 1–7 implementadas en local.
 - Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9, 10 y 11 aplicadas.
-- Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 pendiente de aplicar.
+- Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 aplicada.
 - Fase 8 en preparación: despliegue Vercel + Cloudflare + Supabase.
 - El corpus de validación local tiene 15 documentos y 1.185 fragmentos, todos publicados como `common`; no se versiona en Git.
 

@@ -109,14 +109,36 @@ export async function getSimulatorDocuments(
   supabase: SupabaseClient,
   groupId: string,
 ): Promise<{ id: string; title: string }[]> {
-  const { data, error } = await supabase
-    .from("documents")
-    .select("id, title")
-    .eq("group_id", groupId)
-    .order("title", { ascending: true });
+  const [{ data: owned, error: ownedError }, { data: common, error: commonError }] =
+    await Promise.all([
+      supabase
+        .from("documents")
+        .select("id, title")
+        .eq("group_id", groupId)
+        .eq("status", "published")
+        .order("title", { ascending: true }),
+      supabase
+        .from("documents")
+        .select("id, title")
+        .eq("visibility", "common")
+        .eq("status", "published")
+        .order("title", { ascending: true }),
+    ]);
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as { id: string; title: string }[];
+  if (ownedError) throw new Error(ownedError.message);
+  if (commonError) throw new Error(commonError.message);
+
+  const documents = new Map<string, { id: string; title: string }>();
+  for (const document of [
+    ...((owned ?? []) as { id: string; title: string }[]),
+    ...((common ?? []) as { id: string; title: string }[]),
+  ]) {
+    documents.set(document.id, document);
+  }
+
+  return [...documents.values()].sort((a, b) =>
+    a.title.localeCompare(b.title, "es"),
+  );
 }
 
 export async function getSimulatorRuns(
