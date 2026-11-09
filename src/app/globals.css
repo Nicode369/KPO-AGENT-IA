@@ -2037,6 +2037,34 @@ button {
   gap: 8px;
 }
 
+.admin-filter-audit {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-filter-audit .admin-filter-actions {
+  grid-column: 1 / -1;
+}
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.admin-pagination > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-pagination .admin-button[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .admin-action-form {
   display: grid;
   gap: 12px;

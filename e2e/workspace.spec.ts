@@ -72,6 +72,13 @@ test.describe("authenticated workspace", () => {
     ).toBeVisible();
     await expectNoNextRuntimeError(page);
 
+    await page.goto("/admin/audit");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Historial de consultas" }),
+    ).toBeVisible();
+    await expect(page.getByText("Consultas en 24 h")).toBeVisible();
+    await expectNoNextRuntimeError(page);
+
     await page.goto("/admin/security");
     await expect(
       page.getByRole("heading", { level: 1, name: "Intentos bloqueados y rechazados" }),

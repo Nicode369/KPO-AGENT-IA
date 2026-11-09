@@ -21,6 +21,8 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - `/app` — signed-in dashboard and document agent. Requires an active profile and membership (or superadmin).
 - `/app/history` — personal query history with outcome, model, latency, grounding and sources.
 - `/admin`, `/admin/groups`, `/admin/invitations`, `/admin/users` — access administration.
+- `/admin/audit` — global query history for superadmins and group-scoped history for `group_admin`, read with the service role and group filters.
+- `/admin/security` — blocked and rejected security events for the groups an admin manages.
 - `/admin/documents`, `/admin/documents/[id]` — document library, upload, review, access and version history.
 - `/api/admin/documents/upload`, `/api/admin/documents/[id]/versions` — authenticated multipart proxies to the ingestion Worker.
 - `/api/agent/query` — authenticated RAG query: embeds the question, retrieves authorized published chunks, calls the chat model, validates citations and records an audit trail.
@@ -168,6 +170,7 @@ Manual checks:
 - Reprocess a failed document and verify access restrictions with a group admin from another group.
 - `/app`: ask a question answerable by the published corpus; confirm citations link to sources. Ask an unrelated question; confirm the exact abstention text and no sources. Try a prompt-injection or secret request; confirm it is blocked and appears in history.
 - `/app/history`: confirm the query, outcome, model, latency, grounding and source snapshots are visible only to the same user.
+- `/admin/audit`: as superadmin, confirm queries from every group are visible with full detail and filters; as `group_admin`, confirm only queries from the managed groups appear and the group filter cannot be escaped.
 - `npm run test:e2e` with a running server (`npx playwright install chromium` once). The smoke test checks `/login`.
 
 Do not commit test users, invitations, screenshots or credentials.

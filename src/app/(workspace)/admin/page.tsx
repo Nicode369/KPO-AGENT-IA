@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { requireAdminUser } from "@/lib/auth/workspace";
+import { getAuditQueryCount } from "@/lib/admin/audit";
 import { getAdminGroups, getAdminInvitations, getAdminMembers } from "@/lib/admin/data";
 import { getSecurityAlertCount } from "@/lib/admin/security";
 
@@ -11,10 +12,11 @@ export default async function AdminHomePage() {
   await connection();
   const { supabase, isSuperadmin, adminGroupIds } = await requireAdminUser();
   const groups = await getAdminGroups(supabase, isSuperadmin, adminGroupIds);
-  const [invitations, members, securityAlerts] = await Promise.all([
+  const [invitations, members, securityAlerts, auditQueries] = await Promise.all([
     getAdminInvitations(supabase, groups),
     getAdminMembers(supabase, groups),
     getSecurityAlertCount(isSuperadmin, adminGroupIds),
+    getAuditQueryCount(isSuperadmin, adminGroupIds),
   ]);
   const now = new Date();
   const activeInvitations = invitations.filter(
@@ -49,6 +51,19 @@ export default async function AdminHomePage() {
           <strong>{securityAlerts ?? "—"}</strong>
           <small>Bloqueos y rechazos</small>
         </Link>
+      </section>
+
+      <section className="admin-panel">
+        <h2>Auditoría</h2>
+        <p>
+          Revisa el historial completo de consultas al asistente, con usuario,
+          pregunta, respuesta, resultado y fuentes. En las últimas 24 h hay{" "}
+          {auditQueries ?? "—"} consultas visibles para tu perfil.
+        </p>
+        <div className="admin-actions">
+          <Link className="admin-button" href="/admin/audit">Ver historial de consultas</Link>
+          <Link className="admin-button admin-button-secondary" href="/admin/security">Ver alertas de seguridad</Link>
+        </div>
       </section>
 
       <section className="admin-panel">

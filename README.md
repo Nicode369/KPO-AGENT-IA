@@ -55,7 +55,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 3 | Base de datos, Auth, invitaciones, roles y RLS | ✅ Completada |
 | 4 | Gestión documental, OCR, publicación y versionado | ✅ Completada en local |
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
-| 6 | Auditoría y trazabilidad ampliada | 🚧 Parcial: `agent_queries`, `agent_query_sources`, `document_events`, hashes e historial; falta cadena de hashes global, reportes y verificador |
+| 6 | Auditoría y trazabilidad ampliada | 🚧 Parcial: `agent_queries`, `agent_query_sources`, `document_events`, hashes, historial personal y visor administrativo `/admin/audit`; falta cadena de hashes global, reportes y verificador |
 | 7 | Simulador de pruebas | ⏳ Pendiente |
 | 8 | Integración y despliegue | 🚧 En preparación: código y documentación listos; falta publicar Worker, Vercel y configurar Auth/redirects |
 
@@ -113,7 +113,9 @@ El repositorio incluye una validación local con **15 documentos, 1.185 fragment
 - `/admin/users`: cambiar rol, estado y revocar sesiones.
 - `/admin/documents`: cargar, procesar, revisar, aprobar, publicar, retirar y versionar.
 - `/admin/documents/[id]`: detalle de versiones, fragmentos, accesos, eventos y errores.
-- Panel de resumen con miembros, invitaciones y documentos.
+- `/admin/audit`: historial global de consultas para superadmin y acotado a sus grupos para `group_admin`, con filtros por resultado, grupo, usuario, fechas y texto.
+- `/admin/security`: intentos bloqueados y rechazados de los grupos administrados.
+- Panel de resumen con miembros, invitaciones, documentos, consultas y alertas.
 - Contador global de fragmentos indexados.
 
 ## Arquitectura
@@ -343,6 +345,8 @@ Las migraciones 1–8 están aplicadas en el proyecto remoto usado durante el de
 | `/admin/users` | Superadmin / `group_admin` | Roles, estados y revocación de sesiones |
 | `/admin/documents` | Superadmin / `group_admin` | Biblioteca y carga documental |
 | `/admin/documents/[id]` | Superadmin / `group_admin` | Detalle, versiones, fragmentos y eventos |
+| `/admin/audit` | Superadmin / `group_admin` | Historial global o acotado a sus grupos |
+| `/admin/security` | Superadmin / `group_admin` | Intentos bloqueados y rechazados |
 | `/api/agent/query` | Usuario activo | Consulta RAG |
 | `/api/admin/documents/upload` | Superadmin / `group_admin` | Proxy multipart al Worker |
 | `/api/admin/documents/[id]/versions` | Superadmin / `group_admin` | Nueva versión |
@@ -407,6 +411,7 @@ erDiagram
 | Gestionar documentos | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Publicar/retirar versiones | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Revocar sesiones | ✅ | ❌ | ❌ | ❌ |
+| Historial de consultas administrativo | ✅ Global | ✅ Su grupo | ❌ | ❌ |
 | Auditoría global / reportes | 🚧 Fase 6 | 🚧 Fase 6 | 🚧 Fase 6 | ❌ |
 | Simulador | 🚧 Fase 7 | 🚧 Fase 7 | 🚧 Fase 7 | ❌ |
 
@@ -444,7 +449,7 @@ npm run dev
 npm run test:e2e
 ```
 
-Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users` y `/admin/groups`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js.
+Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit` y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js.
 
 ## Despliegue
 
@@ -468,7 +473,7 @@ Resumen:
 
 ## Limitaciones conocidas
 
-- **Fases 6 y 7 incompletas:** falta auditoría global con cadena de hashes, reportes, verificador y simulador.
+- **Fases 6 y 7 incompletas:** el visor de historial administrativo ya existe; faltan cadena de hashes append-only, reportes, exportación, verificador y simulador.
 - **Sin despliegue todavía:** no hay URL pública; `APP_ORIGIN` e `INGEST_WORKER_URL` apuntan a local.
 - **OCR síncrono:** el procesamiento ocurre dentro del request; `maxDuration = 60` puede ser insuficiente para PDFs muy grandes.
 - **Límite de Vercel:** el proxy multipart puede limitar cuerpos grandes (~4.5 MB). El corpus actual está por debajo; para documentos mayores conviene cola o carga directa.
@@ -481,7 +486,7 @@ Resumen:
 
 ## Fases pendientes
 
-1. **Fase 6 — Auditoría y trazabilidad:** `audit_events` append-only con cadena SHA-256, eventos de login/logout/fallos, cambios administrativos, UI de auditoría, reportes, exportación y verificador.
+1. **Fase 6 — Auditoría y trazabilidad:** visor `/admin/audit` implementado; falta `audit_events` append-only con cadena SHA-256, eventos de login/logout/fallos, cambios administrativos, reportes, exportación y verificador.
 2. **Fase 7 — Simulador:** tablas `simulator_cases`, `simulator_runs`, `simulator_results`; reutilización de `runAgentQuery`; UI `/admin/simulator`; métricas de acierto, abstención, citas y latencia; ejecución por lotes.
 3. **Fase 8 — Cierre:** desplegar Worker y app, configurar Auth/redirects, backups, monitoreo, smoke tests y documentación final.
 4. **Mejoras operativas:** mover OCR a cola, probar rate limit con carga, añadir SMTP si se requiere verificación real y ampliar E2E a flujos de grupo.

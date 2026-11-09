@@ -42,6 +42,8 @@ npm run deploy       # requiere npx wrangler login
 - `src/lib/auth/workspace.ts` — `requireUser`, `requireAdminUser`, role checks.
 - `src/lib/admin/data.ts` — admin queries for groups, invitations and members.
 - `src/lib/admin/documents.ts` — document library/detail queries, signed URLs and labels.
+- `src/lib/admin/audit.ts` — admin query history via service role, scoped by group for `group_admin`.
+- `src/app/(workspace)/admin/audit/page.tsx` — global/group-scoped query history for admins.
 - `src/lib/agent/` — RAG prompt, citation validation, abstention, security classifier and response types.
 - `src/app/(workspace)/admin/documents/` — document list, detail, review forms and server actions.
 - `src/app/api/admin/documents/` — multipart proxies to the ingestion Worker.

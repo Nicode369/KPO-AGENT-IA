@@ -7,6 +7,7 @@ import {
   DashboardIcon,
   DocumentIcon,
   GroupsIcon,
+  HistoryIcon,
   InvitationIcon,
   ShieldIcon,
   UsersIcon,
@@ -18,6 +19,7 @@ const items = [
   { href: "/admin/groups", label: "Grupos", icon: GroupsIcon, exact: false },
   { href: "/admin/invitations", label: "Invitaciones", icon: InvitationIcon, exact: false },
   { href: "/admin/users", label: "Usuarios", icon: UsersIcon, exact: false },
+  { href: "/admin/audit", label: "Auditoría", icon: HistoryIcon, exact: false },
   { href: "/admin/security", label: "Seguridad", icon: ShieldIcon, exact: false },
 ];
 
