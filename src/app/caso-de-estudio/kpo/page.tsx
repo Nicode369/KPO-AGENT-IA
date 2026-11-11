@@ -294,18 +294,35 @@ export default function KpoCaseStudyPage() {
               <strong>{corpusTotal}</strong>
               <span>documentos publicados en el corpus KPO</span>
             </div>
-            <div className="case-corpus-bar" aria-hidden="true">
-              {corpus.map((card) => (
-                <span
-                  key={card.title}
-                  style={{ flexGrow: card.count }}
-                />
-              ))}
+            <div className="case-corpus-summary-visual">
+              <div className="case-corpus-bar" aria-hidden="true">
+                {corpus.map((card) => (
+                  <span
+                    key={card.title}
+                    style={{ flexGrow: card.count }}
+                  />
+                ))}
+              </div>
+              <ul className="case-corpus-legend">
+                {corpus.map((card, index) => (
+                  <li key={card.title}>
+                    <span
+                      className={`case-corpus-dot case-corpus-dot-${index + 1}`}
+                      aria-hidden="true"
+                    />
+                    {card.title}
+                    <b>{card.count}</b>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
           <div className="case-corpus-grid case-corpus-grid-kpo">
-            {corpus.map((card) => (
-              <article className="case-corpus-card" key={card.title}>
+            {corpus.map((card, index) => (
+              <article
+                className={`case-corpus-card${index === 0 ? " case-corpus-card-featured" : ""}`}
+                key={card.title}
+              >
                 <div className="case-corpus-head">
                   <h3>{card.title}</h3>
                   <span>
@@ -391,12 +408,14 @@ export default function KpoCaseStudyPage() {
         </section>
 
         <section className="case-section case-cta">
-          <p className="case-kicker">Prueba la demo</p>
-          <h2>Pregunta sobre circulares, NIAs o SARLAFT.</h2>
-          <p>
-            Abre la demo KPO y revisa cómo cada respuesta se apoya en documentos
-            publicados del grupo.
-          </p>
+          <div>
+            <p className="case-kicker">Prueba la demo</p>
+            <h2>Pregunta sobre circulares, NIAs o SARLAFT.</h2>
+            <p>
+              Abre la demo KPO y revisa cómo cada respuesta se apoya en documentos
+              publicados del grupo.
+            </p>
+          </div>
           <DemoButtons />
         </section>
       </main>
