@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { runAgentQuery } from "@/lib/agent/run";
 import { getApiWorkspace } from "@/lib/auth/api";
+import { demoRateLimit, isDemoEmail } from "@/lib/auth/demo";
 import { getSuperadminGroupContext } from "@/lib/auth/group-context";
 import { getPublishedDocumentIdsForGroup } from "@/lib/documents/retrieval";
 
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
     documentIds,
     question,
     enforceRateLimit: true,
+    rateLimit: isDemoEmail(context.value.profile.email) ? demoRateLimit() : undefined,
     recordHistory: true,
   });
 

@@ -1,0 +1,470 @@
+{
+  "group": {
+    "name": "Riesgo climático y datos abiertos",
+    "slug": "riesgo-climatico",
+    "reuseGroupId": "4f6f057e-b5b4-4b8e-b3fb-e48382b9d40c",
+    "replaceSlug": "compras-publicas"
+  },
+  "users": [
+    {
+      "key": "analyst",
+      "email": "demo.analista@example.com",
+      "fullName": "Analista Demo",
+      "role": "analyst"
+    },
+    {
+      "key": "admin",
+      "email": "demo.admin@example.com",
+      "fullName": "Administrador Demo",
+      "role": "group_admin"
+    }
+  ],
+  "categories": [
+    {
+      "key": "marco-normativo",
+      "name": "Marco normativo y política",
+      "description": "Leyes, decretos, CONPES y resoluciones que definen competencias y obligaciones."
+    },
+    {
+      "key": "planeacion-grd",
+      "name": "Planeación y GRD territorial",
+      "description": "Instrumentos para incorporar riesgo y clima en POT, PIGCCT y planes municipales."
+    },
+    {
+      "key": "amenaza-clima",
+      "name": "Amenaza y clima",
+      "description": "Metodologías para inundaciones, escenarios climáticos y modelación hidrológica."
+    },
+    {
+      "key": "adaptacion-territorio",
+      "name": "Adaptación y territorio",
+      "description": "Política, guías y enfoques ecosistémicos para territorios resilientes."
+    },
+    {
+      "key": "datos-abiertos",
+      "name": "Datos abiertos e interoperabilidad",
+      "description": "Calidad, publicación, interoperabilidad y aprovechamiento de datos públicos."
+    }
+  ],
+  "documents": [
+    {
+      "title": "Ley 1523 de 2012 - Política Nacional de Gestión del Riesgo de Desastres",
+      "shortTitle": "Ley 1523 de 2012",
+      "entity": "Congreso de la República / IDEAM",
+      "year": 2012,
+      "category": "marco-normativo",
+      "documentType": "ley",
+      "normNumber": "Ley 1523 de 2012",
+      "versionLabel": "2012",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://ideam.gov.co/sites/default/files/normatividad/ley_1523_de_2012.pdf",
+      "description": "Adopta la política nacional de gestión del riesgo de desastres y el Sistema Nacional de Gestión del Riesgo."
+    },
+    {
+      "title": "Ley 1931 de 2018 - Gestión del Cambio Climático",
+      "shortTitle": "Ley 1931 de 2018",
+      "entity": "Congreso de la República / Rama Judicial",
+      "year": 2018,
+      "category": "marco-normativo",
+      "documentType": "ley",
+      "normNumber": "Ley 1931 de 2018",
+      "versionLabel": "2018",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://sidn.ramajudicial.gov.co/SIDN/NORMATIVA/TEXTOS_COMPLETOS/7_LEYES/LEYES%202018/Ley%201931%20de%202018.pdf",
+      "description": "Establece la gestión del cambio climático y los instrumentos de planificación climática territorial."
+    },
+    {
+      "title": "Decreto 2157 de 2017 - Directrices para la gestión del cambio climático",
+      "shortTitle": "Decreto 2157 de 2017",
+      "entity": "Presidencia de la República / DAPRE",
+      "year": 2017,
+      "category": "marco-normativo",
+      "documentType": "decreto",
+      "normNumber": "Decreto 2157 de 2017",
+      "versionLabel": "2017",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://dapre.presidencia.gov.co/normativa/normativa/DECRETO%202157%20DEL%2020%20DE%20DICIEMBRE%20DE%202017.pdf",
+      "description": "Adopta directrices para el Plan de Gestión del Riesgo de Desastres de entidades públicas y privadas."
+    },
+    {
+      "title": "Decreto 298 de 2016 - Comisión Intersectorial de Cambio Climático",
+      "shortTitle": "Decreto 298 de 2016",
+      "entity": "Presidencia de la República / IDEAM",
+      "year": 2016,
+      "category": "marco-normativo",
+      "documentType": "decreto",
+      "normNumber": "Decreto 298 de 2016",
+      "versionLabel": "2016",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.ideam.gov.co/sites/default/files/normatividad/decreto_298_de_2016.pdf",
+      "description": "Organiza la Comisión Intersectorial de Cambio Climático y define su coordinación."
+    },
+    {
+      "title": "CONPES 3920 de 2018 - Estrategia Nacional de Datos Abiertos",
+      "shortTitle": "CONPES 3920 de 2018",
+      "entity": "Departamento Nacional de Planeación / MinTIC",
+      "year": 2018,
+      "category": "marco-normativo",
+      "documentType": "conpes",
+      "normNumber": "CONPES 3920",
+      "versionLabel": "2018",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://herramientas.datos.gov.co/sites/default/files/2020-11/3920.pdf",
+      "description": "Define la estrategia nacional para el aprovechamiento de datos abiertos públicos."
+    },
+    {
+      "title": "Resolución 0849 de 2022 - Guía para PIGCCT",
+      "shortTitle": "Resolución 0849 de 2022",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2022,
+      "category": "marco-normativo",
+      "documentType": "resolucion",
+      "normNumber": "Resolución 0849 de 2022",
+      "versionLabel": "2022",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2022/08/Resolucio%CC%81n-0849-de-2022.pdf",
+      "description": "Adopta la guía para formular e implementar los Planes Integrales de Gestión del Cambio Climático Territorial."
+    },
+    {
+      "title": "Guía para la formulación e implementación de los PIGCCT",
+      "shortTitle": "Guía PIGCCT",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2022,
+      "category": "planeacion-grd",
+      "documentType": "guia",
+      "normNumber": "PIGCCT-2022",
+      "versionLabel": "2022",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2022/10/GUIA-PARA-LA-FORMULACION-PIGCCT-web-_ISBN_VF.pdf",
+      "description": "Metodología para formular, implementar y hacer seguimiento a los planes climáticos territoriales."
+    },
+    {
+      "title": "Orientaciones técnicas para incorporar la GRD en la planificación del POT",
+      "shortTitle": "Orientaciones GRD en POT",
+      "entity": "Ministerio de Vivienda, Ciudad y Territorio / SGC",
+      "year": 2022,
+      "category": "planeacion-grd",
+      "documentType": "guia",
+      "normNumber": "MVCT-SGC-2022",
+      "versionLabel": "2022",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minvivienda.gov.co/sites/default/files/documentos/orientaciones-tecnica-pra-incorporacion-de-la-gestion-de-riesgo-de-desatres-en-la-planificacion-del-ordenamiento-territorial_mvct_2022.pdf",
+      "description": "Guía técnica para estudios básicos y medidas de gestión del riesgo en el ordenamiento territorial."
+    },
+    {
+      "title": "La incorporación de la gestión del riesgo en los POT",
+      "shortTitle": "Riesgo en POT",
+      "entity": "Ministerio de Vivienda, Ciudad y Territorio",
+      "year": 2015,
+      "category": "planeacion-grd",
+      "documentType": "guia",
+      "normNumber": "MVCT-POT-2015",
+      "versionLabel": "2015",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minvivienda.gov.co/sites/default/files/documentos/Incorporaci%C3%B3n%20riesgo%20en%20POT.pdf",
+      "description": "Presenta la zonificación de amenazas y riesgos como elemento estructurante del modelo de ocupación."
+    },
+    {
+      "title": "Hoja de ruta para los planes de adaptación del PNACC",
+      "shortTitle": "Hoja de ruta PNACC",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2013,
+      "category": "planeacion-grd",
+      "documentType": "guia",
+      "normNumber": "PNACC-HR-2013",
+      "versionLabel": "2013",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2022/01/2._hoja_ruta_planes_adaptacion_v_0.pdf",
+      "description": "Fases y pasos para elaborar planes de adaptación en el marco del PNACC."
+    },
+    {
+      "title": "PNACC - Líneas de acción prioritarias para la adaptación",
+      "shortTitle": "PNACC Líneas prioritarias",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2016,
+      "category": "planeacion-grd",
+      "documentType": "politica",
+      "normNumber": "PNACC-2016",
+      "versionLabel": "2016",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2022/01/PNACC-2016-linea-accion-prioritarias.pdf",
+      "description": "Define líneas prioritarias de adaptación y su relación con la planificación territorial."
+    },
+    {
+      "title": "Guía metodológica para la elaboración de mapas de inundación",
+      "shortTitle": "Mapas de inundación",
+      "entity": "Instituto de Hidrología, Meteorología y Estudios Ambientales",
+      "year": 2017,
+      "category": "amenaza-clima",
+      "documentType": "guia",
+      "normNumber": "IDEAM-INUND-2017",
+      "versionLabel": "2017",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.ideam.gov.co/sites/default/files/prensa/publicaciones/guia_metodologica_para_la_elaboracion_de_mapas_de_inundacion.pdf",
+      "description": "Pasos para modelar amenaza por inundación y generar mapas de profundidad y velocidad."
+    },
+    {
+      "title": "Guía metodológica para escenarios de cambio climático de la 4CN",
+      "shortTitle": "Escenarios de cambio climático 4CN",
+      "entity": "Instituto de Hidrología, Meteorología y Estudios Ambientales",
+      "year": 2024,
+      "category": "amenaza-clima",
+      "documentType": "guia",
+      "normNumber": "IDEAM-4CN-ESC",
+      "versionLabel": "4CN",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.ideam.gov.co/sites/default/files/mapa-de-procesos/gci-g004_guia_metodologica_de_la_elaboracion_de_los_escenarios_de_cambio_climatico_de_la_cuarta_comunicacion_nacional_de_cambio_climatico_de_colombia_1.pdf",
+      "description": "Metodología para construir escenarios de cambio climático a partir de modelos y datos observados."
+    },
+    {
+      "title": "Protocolo de modelación hidrológica e hidráulica",
+      "shortTitle": "Modelación hidrológica e hidráulica",
+      "entity": "Instituto de Hidrología, Meteorología y Estudios Ambientales",
+      "year": 2018,
+      "category": "amenaza-clima",
+      "documentType": "protocolo",
+      "normNumber": "IDEAM-MOD-2018",
+      "versionLabel": "2018",
+      "license": "Documento público del IDEAM; uso demostrativo con atribución",
+      "url": "https://www.ideam.gov.co/sites/default/files/prensa/publicaciones/protocolo_de_modelacion_hidrologica_e_hidraulica.pdf",
+      "description": "Buenas prácticas para modelar la dinámica del agua y sustentar estudios de amenaza."
+    },
+    {
+      "title": "Política Nacional de Cambio Climático - Resumen ejecutivo",
+      "shortTitle": "PNCC Resumen",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2017,
+      "category": "adaptacion-territorio",
+      "documentType": "politica",
+      "normNumber": "PNCC-2017",
+      "versionLabel": "Resumen ejecutivo",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://bpm.minambiente.gov.co/images/cambioclimatico/pdf/Poli_CC_A2_B16_C6_WEB_Resumen_de_la_PNCC_dirigido_a_tomadores_de_decision.pdf",
+      "description": "Sintetiza la Política Nacional de Cambio Climático para tomadores de decisión y entidades territoriales."
+    },
+    {
+      "title": "Guía de Territorios Empoderados para la Acción Climática",
+      "shortTitle": "Territorios Empoderados",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2021,
+      "category": "adaptacion-territorio",
+      "documentType": "guia",
+      "normNumber": "MADS-TE-2021",
+      "versionLabel": "2021",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2021/12/Gui%CC%81a-de-Territorios-Empoderados-para-la-Accio%CC%81n-Clima%CC%81tica-2021-VFsep16.pdf",
+      "description": "Orienta a departamentos y municipios para alinear su gestión con las metas climáticas nacionales."
+    },
+    {
+      "title": "Guía para medidas de Reducción de Riesgo de Desastre basado en Ecosistemas",
+      "shortTitle": "Guía Eco-RRD",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2023,
+      "category": "adaptacion-territorio",
+      "documentType": "guia",
+      "normNumber": "MADS-ECO-RRD-2023",
+      "versionLabel": "2023",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2023/07/Guia-ECO-RRD.pdf",
+      "description": "Herramientas para implementar reducción del riesgo con enfoque ecosistémico marino-costero."
+    },
+    {
+      "title": "PNACC - Adaptación: bases conceptuales",
+      "shortTitle": "PNACC Bases conceptuales",
+      "entity": "Ministerio de Ambiente y Desarrollo Sostenible",
+      "year": 2012,
+      "category": "adaptacion-territorio",
+      "documentType": "politica",
+      "normNumber": "PNACC-ABC-2012",
+      "versionLabel": "2012",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://www.minambiente.gov.co/wp-content/uploads/2022/01/1._Plan_Nacional_de_Adaptacion_al_Cambio_Climatico.pdf",
+      "description": "Marco conceptual y lineamientos para planes sectoriales y territoriales de adaptación."
+    },
+    {
+      "title": "Marco de Interoperabilidad para Gobierno Digital",
+      "shortTitle": "Marco de Interoperabilidad",
+      "entity": "Ministerio de Tecnologías de la Información y las Comunicaciones",
+      "year": 2019,
+      "category": "datos-abiertos",
+      "documentType": "marco",
+      "normNumber": "MINTIC-MI-2019",
+      "versionLabel": "2019",
+      "license": "Documento público oficial; uso con atribución",
+      "url": "https://lenguaje.mintic.gov.co/sites/default/files/archivos/marco_de_interoperabilidad_para_gobierno_digital.pdf",
+      "description": "Lineamientos para intercambiar información entre entidades públicas y servicios digitales."
+    },
+    {
+      "title": "Guía de calidad e interoperabilidad de datos abiertos 2025",
+      "shortTitle": "Calidad de datos abiertos 2025",
+      "entity": "Ministerio de Tecnologías de la Información y las Comunicaciones",
+      "year": 2025,
+      "category": "datos-abiertos",
+      "documentType": "guia",
+      "normNumber": "MINTIC-CD-2025",
+      "versionLabel": "2025",
+      "license": "Creative Commons Atribución 4.0 Internacional",
+      "url": "https://herramientas.datos.gov.co/sites/default/files/2025-08/Gu%C3%ADa%20de%20calidad%20e%20interoperabilidad%20datos%20abiertos-2025.pdf",
+      "description": "Criterios prácticos para evaluar y mejorar calidad, interoperabilidad y trazabilidad de datos abiertos."
+    },
+    {
+      "title": "Guía para el uso y aprovechamiento de Datos Abiertos en Colombia",
+      "shortTitle": "Guía de Datos Abiertos",
+      "entity": "Ministerio de Tecnologías de la Información y las Comunicaciones",
+      "year": 2019,
+      "category": "datos-abiertos",
+      "documentType": "guia",
+      "normNumber": "MINTIC-DA-2019",
+      "versionLabel": "2019",
+      "license": "Creative Commons Atribución 4.0 Internacional",
+      "url": "https://herramientas.datos.gov.co/sites/default/files/Guia%20de%20Datos%20Abiertos%20de%20Colombia.pdf",
+      "description": "Buenas prácticas para abrir, publicar, comunicar y reutilizar datos públicos."
+    },
+    {
+      "title": "Modelo de Uso: Calidad de Datos",
+      "shortTitle": "Modelo de Calidad de Datos",
+      "entity": "Ministerio de Tecnologías de la Información y las Comunicaciones",
+      "year": 2019,
+      "category": "datos-abiertos",
+      "documentType": "manual",
+      "normNumber": "MINTIC-MUC",
+      "versionLabel": "1.0",
+      "license": "Creative Commons Atribución 4.0 Internacional",
+      "url": "https://herramientas.datos.gov.co/sites/default/files/Modelo_de_Uso_de_Calidad_de_Datos.pdf",
+      "description": "Modelo operativo para automatizar, publicar y sostener la calidad de conjuntos de datos."
+    },
+    {
+      "title": "Guía de calidad e interoperabilidad de datos abiertos 2024",
+      "shortTitle": "Calidad de datos abiertos 2024",
+      "entity": "Ministerio de Tecnologías de la Información y las Comunicaciones",
+      "year": 2024,
+      "category": "datos-abiertos",
+      "documentType": "guia",
+      "normNumber": "MINTIC-CD-2024",
+      "versionLabel": "2024",
+      "license": "Creative Commons Atribución 4.0 Internacional",
+      "url": "https://herramientas.datos.gov.co/sites/default/files/2024-10/Gu%C3%ADa%20de%20calidad%20e%20interoperabilidadde%20datos%20abiertos_compressed.pdf",
+      "description": "Versión anterior de los criterios de calidad e interoperabilidad usados para comparar evolución."
+    }
+  ],
+  "demo": {
+    "client": "Alcaldía de Villa del Río",
+    "headline": "Cuando el riesgo climático se vuelve una pregunta, la respuesta debe citar la fuente.",
+    "intro": "Explora un corpus público de normas, guías y metodologías sobre riesgo climático y datos abiertos. Pregunta en lenguaje natural y revisa cada fuente.",
+    "suggestions": [
+      "¿Cómo se incorpora la gestión del riesgo en un POT municipal?",
+      "¿Qué pasos propone el IDEAM para elaborar mapas de inundación?",
+      "¿Qué debe contener un Plan Integral de Gestión del Cambio Climático Territorial?",
+      "¿Qué criterios de calidad e interoperabilidad debe cumplir un dato abierto?",
+      "¿Qué busca el CONPES 3920 y cómo se relaciona con los datos abiertos?",
+      "¿Qué medidas de reducción del riesgo basadas en ecosistemas existen?"
+    ],
+    "outOfScopeQuestion": "¿Cuál es la mejor ruta turística para llegar a Villa del Río?"
+  },
+  "evaluationCases": [
+    {
+      "title": "Ley 1523 y gestión del riesgo",
+      "question": "¿Qué establece la Ley 1523 de 2012 sobre la gestión del riesgo de desastres?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Ley 1523 de 2012 - Política Nacional de Gestión del Riesgo de Desastres",
+      "expectedTerms": [
+        "gestión del riesgo",
+        "desastres"
+      ],
+      "notes": "Caso base de marco normativo."
+    },
+    {
+      "title": "Incorporación de GRD en el POT",
+      "question": "¿Cómo se incorpora la gestión del riesgo de desastres en un POT municipal?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Orientaciones técnicas para incorporar la GRD en la planificación del POT",
+      "expectedTerms": [
+        "POT",
+        "riesgo"
+      ],
+      "notes": "Caso de planeación territorial."
+    },
+    {
+      "title": "Mapas de inundación",
+      "question": "¿Qué pasos propone el IDEAM para elaborar mapas de inundación?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Guía metodológica para la elaboración de mapas de inundación",
+      "expectedTerms": [
+        "inundación",
+        "modelación"
+      ],
+      "notes": "Caso de amenaza."
+    },
+    {
+      "title": "PIGCCT",
+      "question": "¿Qué contiene un Plan Integral de Gestión del Cambio Climático Territorial?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Guía para la formulación e implementación de los PIGCCT",
+      "expectedTerms": [
+        "PIGCCT",
+        "cambio climático"
+      ],
+      "notes": "Caso de planificación climática."
+    },
+    {
+      "title": "CONPES 3920",
+      "question": "¿Qué busca el CONPES 3920 de 2018 sobre datos abiertos?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "CONPES 3920 de 2018 - Estrategia Nacional de Datos Abiertos",
+      "expectedTerms": [
+        "datos abiertos",
+        "3920"
+      ],
+      "notes": "Caso de política de datos."
+    },
+    {
+      "title": "Calidad de datos abiertos",
+      "question": "¿Qué criterios de calidad e interoperabilidad debe cumplir un dato abierto?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Guía de calidad e interoperabilidad de datos abiertos 2025",
+      "expectedTerms": [
+        "calidad",
+        "interoperabilidad"
+      ],
+      "notes": "Caso de datos abiertos."
+    },
+    {
+      "title": "Eco-RRD",
+      "question": "¿Qué medidas de reducción del riesgo basadas en ecosistemas existen?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Guía para medidas de Reducción de Riesgo de Desastre basado en Ecosistemas",
+      "expectedTerms": [
+        "ecosistemas",
+        "riesgo"
+      ],
+      "notes": "Caso de adaptación."
+    },
+    {
+      "title": "Escenarios de cambio climático",
+      "question": "¿Cómo se elaboran los escenarios de cambio climático de la Cuarta Comunicación Nacional?",
+      "expectedOutcome": "answered",
+      "expectedDocumentTitle": "Guía metodológica para escenarios de cambio climático de la 4CN",
+      "expectedTerms": [
+        "escenarios",
+        "climático"
+      ],
+      "notes": "Caso de amenaza climática."
+    },
+    {
+      "title": "Presupuesto municipal específico",
+      "question": "¿Cuál es el presupuesto exacto aprobado por Villa del Río para mitigación en 2026?",
+      "expectedOutcome": "insufficient_evidence",
+      "expectedDocumentTitle": null,
+      "expectedTerms": [],
+      "notes": "Pregunta específica que no está cubierta por el corpus."
+    },
+    {
+      "title": "Pregunta fuera de alcance",
+      "question": "¿Cuál es la mejor ruta turística para llegar a Villa del Río?",
+      "expectedOutcome": "out_of_scope",
+      "expectedDocumentTitle": null,
+      "expectedTerms": [],
+      "notes": "Pregunta ajena al dominio documental."
+    }
+  ]
+}

@@ -4,6 +4,8 @@ export const AUDIT_EVENT_LABELS: Record<string, string> = {
   auth_login_failed: "Inicio de sesión fallido",
   auth_login_blocked: "Inicio de sesión bloqueado",
   auth_logout: "Cierre de sesión",
+  auth_demo_started: "Demo pública iniciada",
+  auth_demo_unavailable: "Demo pública no disponible",
   auth_signup_failed: "Registro fallido",
   auth_password_reset_requested: "Recuperación de contraseña solicitada",
   auth_password_reset_failed: "Recuperación de contraseña fallida",

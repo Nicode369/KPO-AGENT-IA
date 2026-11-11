@@ -1,4 +1,4 @@
-# KPO-AGENT-IA
+# RAG-AGENT-IA
 
 Aplicación web para consulta documental en auditoría, contabilidad y cumplimiento. Combina autenticación por invitación, aislamiento por grupos, gestión documental con OCR y versionado, y un agente RAG que responde únicamente con versiones publicadas, cita los fragmentos usados y se abstiene cuando no hay evidencia suficiente.
 
@@ -7,12 +7,13 @@ Aplicación web para consulta documental en auditoría, contabilidad y cumplimie
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20pgvector-3ecf8e?logo=supabase)](https://supabase.com/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Workers%20AI-f38020?logo=cloudflare)](https://workers.cloudflare.com/)
-[![Tests](https://img.shields.io/badge/tests-68%20unitarios%20%2B%202%20E2E-2ea44f)](#pruebas)
+[![Tests](https://img.shields.io/badge/tests-90%20unitarios%20%2B%206%20E2E-2ea44f)](#pruebas)
 
 - **Repositorio:** <https://github.com/Nicode369/KPO-AGENT-IA>
 - **Arquitectura detallada:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - **Despliegue:** [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
 - **Memoria técnica:** [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md)
+- **Caso de estudio:** [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md)
 
 ## Índice
 
@@ -37,7 +38,7 @@ Aplicación web para consulta documental en auditoría, contabilidad y cumplimie
 
 ## Qué resuelve
 
-El proyecto implementa el Reto 3 KPO Agent AI con una arquitectura desacoplada:
+El proyecto implementa el Reto 3 RAG Agent AI con una arquitectura desacoplada:
 
 - **Next.js** sirve la interfaz, las rutas privadas, las server actions y las APIs internas.
 - **Supabase** concentra Auth, PostgreSQL con `pgvector`, RLS y Storage privado.
@@ -59,7 +60,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
 | 8 | Integración y despliegue | ✅ App en Vercel y Worker desplegados; pendientes smoke tests de Auth/redirects, backups y monitoreo |
 
-El repositorio incluye una validación con **20 documentos y 1.606 fragmentos**: 15 en KPO, 1 en BPO y 4 en la demo de compras públicas, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups` y el corpus demo con `npm run setup:demo -- --apply`.
+El repositorio incluye una validación con **39 documentos y 4.671 fragmentos**: 15 en KPO, 1 en BPO y 23 en la demo de riesgo climático y datos abiertos, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups` y el corpus demo con `npm run setup:demo -- --apply`.
 
 ## Capacidades
 
@@ -193,7 +194,7 @@ Los diagramas de secuencia, el modelo entidad-relación completo y la topología
 ├── workers/kpo-ingest/             # Worker de ingesta, OCR y modelos
 ├── scripts/ingest-base-drive.mjs   # ingesta masiva local
 ├── scripts/configure-groups.mjs    # reconfiguración KPO/BPO, sin A/B
-├── scripts/setup-demo.mjs          # grupo, cuentas y corpus demo de compras públicas
+├── scripts/setup-demo.mjs          # grupos, cuentas demo KPO/clima y corpus climático
 ├── e2e/                            # Playwright
 ├── docs/                           # arquitectura, despliegue y memoria
 └── public/                         # activos estáticos
@@ -293,15 +294,18 @@ npm run configure:groups -- --apply
 
 El script requiere `SUPABASE_SERVICE_ROLE_KEY` para borrar los grupos/cuentas de prueba y `INGEST_WORKER_URL` accesible para ingestar el PDF de BPO. La cuenta `INGEST_EMAIL` debe ser superadministradora.
 
-Para crear o actualizar la demo de portafolio (grupo `compras-publicas`, cuentas demo y 4 PDFs públicos), ejecuta:
+Para crear o actualizar las demos de portafolio (`DEMO KPO` y `DEMO CLIMA`), ejecuta:
 
 ```bash
 npm run setup:demo           # dry-run
-npm run setup:demo -- --apply
-npm run setup:demo -- --apply --rotate  # rota contraseñas
+npm run setup:demo -- --apply --replace
+npm run setup:demo -- --apply --replace --rotate  # rota contraseñas
+
+# Crear o verificar las cuentas demo sin reingestar documentos
+npm run setup:demo -- --apply --skip-documents
 ```
 
-Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git.
+El script asegura la cuenta `demo.kpo@example.com` en el grupo `kpo` y las cuentas de clima en `riesgo-climatico`. Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git. Para corpus grandes, el Worker gratuito puede superar su límite de CPU; en ese caso levanta `npm run dev` en `workers/kpo-ingest` y ejecuta `DEMO_WORKER_URL=http://localhost:8787 npm run setup:demo -- --apply --replace`.
 
 ### 7. Confirmación de correo
 
@@ -320,6 +324,17 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | `APP_ORIGIN` | Servidor | Origen usado en redirects de Auth |
 | `INGEST_WORKER_URL` | Servidor | URL del Worker de ingesta y modelos |
 | `SUPABASE_SERVICE_ROLE_KEY` | Servidor | Panel de alertas de seguridad y scripts/bootstrap; nunca en el navegador |
+| `DEMO_KPO_EMAIL` | Servidor | Correo de la cuenta demo KPO; por defecto `demo.kpo@example.com` |
+| `DEMO_KPO_PASSWORD` | Servidor | Contraseña de la demo KPO; nunca en el navegador |
+| `DEMO_KPO_GROUP_SLUG` | Servidor | Grupo de la demo KPO; por defecto `kpo` |
+| `DEMO_CLIMA_EMAIL` | Servidor | Correo de la cuenta demo climática |
+| `DEMO_CLIMA_PASSWORD` | Servidor | Contraseña de la demo climática; nunca en el navegador |
+| `DEMO_CLIMA_GROUP_SLUG` | Servidor | Grupo de la demo climática; por defecto `riesgo-climatico` |
+| `DEMO_ANALYST_EMAIL` | Servidor | Compatibilidad: fallback de la demo climática |
+| `DEMO_ANALYST_PASSWORD` | Servidor | Compatibilidad: fallback de la demo climática |
+| `DEMO_GROUP_SLUG` | Servidor | Compatibilidad: fallback del grupo climático |
+| `DEMO_RATE_LIMIT_PER_MINUTE` | Servidor | Límite de consultas demo; por defecto `60` |
+| `DEMO_WORKER_URL` | Servidor | Worker usado por `setup:demo`; permite apuntar al dev local |
 
 ### Worker de Cloudflare
 
@@ -368,7 +383,8 @@ Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el d
 
 | Ruta | Acceso | Descripción |
 | --- | --- | --- |
-| `/` | Público | Landing |
+| `/` | Público | Landing con acceso a las demos KPO y clima |
+| `/caso-de-estudio` | Público | Caso de estudio de riesgo climático y datos abiertos |
 | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | Público | Flujos de autenticación |
 | `/app` | Usuario activo | Dashboard, consola del agente y selector de grupo activo para superadmin |
 | `/app/history` | Usuario activo | Historial personal de consultas |
@@ -477,9 +493,9 @@ erDiagram
 
 | Suite | Comando | Cobertura |
 | --- | --- | --- |
-| Web unitarias | `npm test` | 56 tests: prompt, seguridad, outcomes, auditoría, eventos, CSV, fechas y conteo de fragmentos |
+| Web unitarias | `npm test` | 74 tests: prompt, seguridad, outcomes, auditoría, eventos, CSV, fechas, demos y conteo de fragmentos |
 | Worker | `cd workers/kpo-ingest && npm test` | 16 tests: OCR, archivos, chunking y documentos |
-| E2E | `npm run test:e2e` | 2 tests: autenticación y rutas privadas sin overlays de Next |
+| E2E | `npm run test:e2e` | 6 tests: autenticación, rutas privadas y auto-login de ambas demos |
 | Lint | `npm run lint` | ESLint + reglas de Next |
 | Build | `npm run build` | Next.js producción con webpack |
 | Typecheck Worker | `npm run typecheck` | TypeScript estricto |
@@ -492,7 +508,7 @@ npm run dev
 npm run test:e2e
 ```
 
-Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit`, `/admin/audit/events`, `/admin/reports`, la descarga CSV y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js. Los nuevos checks requieren `SUPABASE_SERVICE_ROLE_KEY` y las migraciones 9 y 10 aplicadas.
+Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/caso-de-estudio`, el auto-login de ambas demos con `DEMO_KPO_*` y `DEMO_CLIMA_*` (o `DEMO_ANALYST_*` como fallback), `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit`, `/admin/audit/events`, `/admin/reports`, la descarga CSV y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js. Los nuevos checks requieren `SUPABASE_SERVICE_ROLE_KEY` y las migraciones 9 y 10 aplicadas.
 
 ## Despliegue
 
@@ -524,7 +540,7 @@ Resumen:
 - **Rate limit no probado bajo carga real.**
 - **OCR de imágenes embebidas en DOCX no implementado.**
 - **Supervisor sin panel de seguimiento dedicado:** puede ejecutar el simulador y consultar sus resultados, pero no gestiona casos ni miembros.
-- **Datos de validación:** los 20 documentos y 1.606 fragmentos no forman parte del repo; KPO vive en `../base_drive/`, BPO se descarga desde el IESE y la demo usa PDFs públicos de Colombia Compra Eficiente.
+- **Datos de validación:** los 39 documentos y 4.671 fragmentos no forman parte del repo; KPO vive en `../base_drive/`, BPO se descarga desde el IESE y la demo usa 23 PDFs públicos de entidades colombianas.
 - **Integración de proveedor de IA:** la capa está separada en el Worker, pero cambiar de proveedor requiere adaptar `workers/kpo-ingest/src`.
 
 ## Fases pendientes
@@ -539,5 +555,6 @@ Resumen:
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): componentes, flujos, ERD, roles, API y decisiones.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): despliegue Vercel + Cloudflare + Supabase.
 - [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md): memoria técnica y estado detallado.
+- [`docs/CASE_STUDY.md`](docs/CASE_STUDY.md): corpus, recorrido y límites de la demo pública.
 - [`AGENTS.md`](AGENTS.md): comandos y reglas operativas para agentes de desarrollo.
 - [`supabase/migrations/`](supabase/migrations/): fuente de verdad del esquema.

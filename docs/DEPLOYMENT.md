@@ -1,4 +1,4 @@
-# Despliegue — KPO Agent AI
+# Despliegue — RAG Agent AI
 
 Guía para publicar la aplicación con **Vercel + Cloudflare Worker + Supabase**. La app está desplegada en Vercel y el Worker en Cloudflare; este documento describe el procedimiento y las verificaciones de cierre.
 
@@ -210,8 +210,15 @@ Configurar en **Production** y, si se usan previews, en **Preview**:
 | `INGEST_WORKER_URL` | URL HTTPS del Worker |
 | `APP_ORIGIN` | `https://<dominio-produccion>` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave server-side para el panel de alertas de seguridad |
+| `DEMO_KPO_EMAIL` | `demo.kpo@example.com` |
+| `DEMO_KPO_PASSWORD` | Contraseña rotada; solo server-side |
+| `DEMO_KPO_GROUP_SLUG` | `kpo` |
+| `DEMO_CLIMA_EMAIL` | `demo.analista@example.com` |
+| `DEMO_CLIMA_PASSWORD` | Contraseña rotada; solo server-side |
+| `DEMO_CLIMA_GROUP_SLUG` | `riesgo-climatico` |
+| `DEMO_RATE_LIMIT_PER_MINUTE` | `60` |
 
-`SUPABASE_SERVICE_ROLE_KEY` es necesaria para que `/admin/security` pueda leer eventos de todos los usuarios. Debe ser solo server-side y nunca llevar prefijo `NEXT_PUBLIC_`.
+`SUPABASE_SERVICE_ROLE_KEY` es necesaria para que `/admin/security` pueda leer eventos de todos los usuarios. Debe ser solo server-side y nunca llevar prefijo `NEXT_PUBLIC_`. Las variables `DEMO_*` activan los botones públicos **DEMO KPO** y **DEMO CLIMA**; si falta la cuenta o la contraseña de una variante, el botón redirige a `/login?error=demo_unavailable`. Las variables antiguas `DEMO_ANALYST_*` y `DEMO_GROUP_SLUG` siguen funcionando como fallback para la demo climática.
 
 No configurar tokens de Cloudflare en Vercel: el Worker se despliega aparte.
 
@@ -294,12 +301,12 @@ O desplegar la versión anterior del código.
 ## 9. Limitaciones del despliegue provisional
 
 - Fases 6 y 7 implementadas; migraciones 9–12 aplicadas y cadena verificada. Falta completar el despliegue y los smoke tests de producción.
-- Sin despliegue público todavía.
+- App y Worker desplegados; faltan backups, monitoreo y smoke tests completos de producción.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
-- Rate limit no probado con carga real.
-- El corpus de 20 documentos y 1.606 fragmentos no se versiona: KPO vive en `../base_drive/`, BPO se obtiene con `npm run configure:groups` y la demo con `npm run setup:demo -- --apply`.
+- Rate limit no probado con carga real; la demo pública usa 60 consultas/minuto.
+- El corpus de 39 documentos y 4.671 fragmentos no se versiona: KPO vive en `../base_drive/`, BPO se obtiene con `npm run configure:groups` y la demo con `npm run setup:demo -- --apply --replace`.
 
 ## 10. Checklist final
 

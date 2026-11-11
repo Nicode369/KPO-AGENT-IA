@@ -4,6 +4,8 @@ import { connection } from "next/server";
 import { AgentConsole } from "@/components/agent-console";
 
 import { roleLabel } from "@/lib/admin/data";
+import { demoVariantForEmail } from "@/lib/auth/demo";
+import { demoCopy } from "@/lib/demo/variants";
 import { getSuperadminGroupContext } from "@/lib/auth/group-context";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 
@@ -46,6 +48,7 @@ export default async function AppHomePage({
   const showAdmin =
     profile.is_superadmin ||
     memberships.some((membership) => membership.role === "group_admin");
+  const demo = demoCopy(demoVariantForEmail(profile.email));
 
   return (
     <main className="signed-in-content">
@@ -138,7 +141,10 @@ export default async function AppHomePage({
         )}
       </section>
 
-      <AgentConsole />
+      <AgentConsole
+        suggestions={demo?.suggestions}
+        intro={demo?.intro}
+      />
 
       {showAdmin ? (
         <div className="workspace-actions">

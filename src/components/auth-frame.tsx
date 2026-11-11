@@ -17,9 +17,9 @@ export function AuthFrame({
   return (
     <main className="auth-page">
       <aside className="auth-aside">
-        <Link className="auth-brand" href="/" aria-label="KPO Agent AI, inicio">
+        <Link className="auth-brand" href="/" aria-label="RAG Agent AI, inicio">
           <BrandMark />
-          <span>KPO <i>/</i> AGENT</span>
+          <span>RAG <i>/</i> AGENT</span>
         </Link>
         <div className="auth-aside-body">
           <p className="auth-aside-title">La evidencia guía cada respuesta.</p>
@@ -71,6 +71,7 @@ export function AuthMessage({ code }: { code?: string | string[] }) {
     request_failed: "No se pudo enviar la solicitud. Inténtalo de nuevo más tarde.",
     weak_password: "La contraseña no cumple la política de Supabase. Usa al menos la longitud mínima configurada (6 en la app).",
     update_failed: "No se pudo actualizar la contraseña. Solicita un nuevo enlace.",
+    demo_unavailable: "La demo solicitada no está disponible en este momento. Inténtalo más tarde.",
   };
   const message = messages[normalizedCode];
   return message ? <p className="auth-message" role="alert">{message}</p> : null;

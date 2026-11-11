@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
+import { DemoButtons } from "@/components/demo-buttons";
 import {
   CheckIcon,
   DocumentIcon,
@@ -14,9 +15,9 @@ import {
 } from "@/components/icons";
 
 const corpus = {
-  documents: 20,
-  chunks: 1_606,
-  published: "9 nov 2026",
+  documents: 39,
+  chunks: 4_671,
+  published: "10 nov 2026",
 };
 
 const collections = [
@@ -33,9 +34,9 @@ const collections = [
     icon: LibraryIcon,
   },
   {
-    title: "Compras públicas y transparencia",
-    description: "Contratación estatal, mínima cuantía, obra pública y datos abiertos del SECOP.",
-    detail: "4 documentos",
+    title: "Riesgo climático y datos abiertos",
+    description: "Normativa, planeación territorial, amenaza climática, adaptación y datos abiertos.",
+    detail: "23 documentos",
     icon: ShieldIcon,
   },
 ];
@@ -170,18 +171,19 @@ export default function Home() {
     <div className="site-shell">
       <header className="site-header">
         <div className="site-header-inner">
-          <a className="site-brand" href="#inicio" aria-label="KPO Agent AI, inicio">
+          <a className="site-brand" href="#inicio" aria-label="RAG Agent AI, inicio">
             <BrandMark />
-            <span className="site-wordmark">KPO <i>/</i> AGENT</span>
+            <span className="site-wordmark">RAG <i>/</i> AGENT</span>
           </a>
           <nav className="site-nav" aria-label="Navegación principal">
             <a href="#biblioteca">Biblioteca</a>
             <a href="#capacidades">Capacidades</a>
             <a href="#como-funciona">Cómo funciona</a>
             <a href="#seguridad">Seguridad</a>
+            <Link href="/caso-de-estudio">Caso de estudio</Link>
           </nav>
           <div className="site-actions">
-            <Link className="button button-primary" href="/login">Acceder</Link>
+            <Link className="button button-secondary" href="/login">Acceder</Link>
           </div>
         </div>
       </header>
@@ -191,13 +193,15 @@ export default function Home() {
           <div className="hero-copy">
             <h1>Documentos que responden con <span className="hero-mark">evidencia.</span></h1>
             <p className="hero-lede">
-              KPO Agent AI combina búsqueda semántica, permisos por grupo y auditoría para
+              RAG Agent AI combina búsqueda semántica, permisos por grupo y auditoría para
               consultar normas de auditoría, contabilidad y cumplimiento sin perder la
               fuente de cada afirmación.
             </p>
             <div className="hero-actions">
-              <Link className="button button-primary" href="/login">Acceder al espacio</Link>
-              <a className="button button-secondary" href="#como-funciona">Ver cómo funciona</a>
+              <DemoButtons />
+              <Link className="text-link hero-case-link" href="/caso-de-estudio">
+                Leer caso de estudio
+              </Link>
             </div>
             <p className="hero-meta">
               <span className="status-dot" />
@@ -373,16 +377,16 @@ export default function Home() {
               </div>
               <p>
                 El corpus publicado contiene {corpus.documents} documentos: 15 de KPO,
-                1 de BPO y 4 de la demo de compras públicas. El índice de metadatos y los
-                ejercicios del Bootcamp quedan fuera de la búsqueda porque no son fuentes
-                normativas.
+                1 de BPO y 23 de la demo de riesgo climático y datos abiertos. El índice de
+                metadatos y los ejercicios del Bootcamp quedan fuera de la búsqueda porque
+                no son fuentes normativas.
               </p>
             </aside>
           </div>
         </section>
 
         <footer className="site-footer">
-          <span className="footer-brand"><BrandMark /> <strong>KPO Agent AI</strong></span>
+          <span className="footer-brand"><BrandMark /> <strong>RAG Agent AI</strong></span>
           <span>La evidencia guía cada respuesta.</span>
           <span>Reto 3 · Bootcamp CCB</span>
         </footer>

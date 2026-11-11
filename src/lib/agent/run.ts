@@ -35,6 +35,7 @@ export type RunAgentQueryInput = {
   question: string;
   documentIds?: string[];
   enforceRateLimit?: boolean;
+  rateLimit?: number;
   recordHistory?: boolean;
 };
 
@@ -50,6 +51,10 @@ export async function runAgentQuery(
   const groupIds = input.groupIds;
   const persist = input.recordHistory !== false;
   const enforceRateLimit = input.enforceRateLimit !== false;
+  const rateLimit =
+    typeof input.rateLimit === "number" && input.rateLimit > 0
+      ? Math.floor(input.rateLimit)
+      : RATE_LIMIT_PER_MINUTE;
 
   if (!question || question.length < 3 || question.length > 1200) {
     await maybeRecordQuery(input, persist, {
@@ -81,7 +86,7 @@ export async function runAgentQuery(
       .eq("user_id", input.userId)
       .gte("created_at", new Date(Date.now() - 60_000).toISOString());
 
-    if ((recentQueries ?? 0) >= RATE_LIMIT_PER_MINUTE) {
+    if ((recentQueries ?? 0) >= rateLimit) {
       const message =
         "Has realizado demasiadas consultas. Espera un minuto e intenta de nuevo.";
       await maybeRecordQuery(input, persist, {
@@ -96,7 +101,7 @@ export async function runAgentQuery(
         groupIds,
         sources: [],
         groundingScore: null,
-        controls: { rate_limit_per_minute: RATE_LIMIT_PER_MINUTE },
+        controls: { rate_limit_per_minute: rateLimit },
       });
       return { ok: false, status: 429, code: "rate_limited", message };
     }

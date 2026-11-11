@@ -1,66 +1,42 @@
 #!/usr/bin/env node
 import { randomBytes, createHash } from "node:crypto";
 import { chmod, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 const APPLY = process.argv.includes("--apply");
 const ROTATE = process.argv.includes("--rotate");
+const REPLACE = process.argv.includes("--replace");
 const SKIP_DOCUMENTS = process.argv.includes("--skip-documents");
 const TEMP_DIR = "/tmp/opencode";
 const MAX_PDF_BYTES = 26214400;
 const DEFAULT_WORKER_URL = "https://kpo-ingest.nicode.workers.dev";
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const CACHE_DIR = resolve(process.env.DEMO_PDF_DIR ?? join(ROOT, "data/demo-pdfs"));
+const USER_AGENT =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36";
+const manifest = JSON.parse(
+  await readFile(join(ROOT, "data/demo-corpus.json"), "utf8"),
+);
 
 const GROUP = {
-  name: "Compras públicas y transparencia",
-  slug: "compras-publicas",
+  name: manifest.group.name,
+  slug: manifest.group.slug,
+  reuseGroupId: manifest.group.reuseGroupId ?? null,
+  replaceSlug: manifest.group.replaceSlug ?? null,
 };
 
-const USERS = [
-  {
-    key: "analyst",
-    email: "demo.analista@example.com",
-    fullName: "Analista Demo",
-    role: "analyst",
-  },
-  {
-    key: "admin",
-    email: "demo.admin@example.com",
-    fullName: "Administrador Demo",
-    role: "group_admin",
-  },
-];
-
-const DOCUMENTS = [
-  {
-    title: "Guía de Contratación Pública Sostenible y Socialmente Responsable 2024",
-    documentType: "guia",
-    normNumber: "CCE-MADS-2024",
-    versionLabel: "2024",
-    url: "https://operaciones.colombiacompra.gov.co/sites/cce_public/files/cce_documents/guia_de_contratacion_publica_sostenible_y_socialmente_responsable_2024.pdf",
-  },
-  {
-    title: "Guía para Procesos de Contratación de Obra Pública",
-    documentType: "guia",
-    normNumber: "G-GPCOP-01",
-    versionLabel: "2024",
-    url: "https://www.colombiacompra.gov.co/wp-content/uploads/2024/08/cce_guia_obra_publica.pdf",
-  },
-  {
-    title: "Manual de la Modalidad de Selección de Mínima Cuantía",
-    documentType: "manual",
-    normNumber: "CCE-SMC-2024",
-    versionLabel: "2024",
-    url: "https://www.colombiacompra.gov.co/wp-content/uploads/2024/08/manual_de_la_modalidad_de_seleccion_de_minima_cuantia.pdf",
-  },
-  {
-    title: "Manual para el uso de Datos Abiertos del SECOP",
-    documentType: "manual",
-    normNumber: "SECOP-DA-2024",
-    versionLabel: "2024",
-    url: "https://www.colombiacompra.gov.co/wp-content/uploads/2024/09/manual_de_datos_abiertos_actualizado.pdf",
-  },
-];
+const USERS = manifest.users;
+const DOCUMENTS = manifest.documents;
+const KPO_GROUP_SLUG = process.env.DEMO_KPO_GROUP_SLUG?.trim() || "kpo";
+const KPO_DEMO_USER = {
+  key: "kpo",
+  email:
+    process.env.DEMO_KPO_EMAIL?.trim().toLowerCase() || "demo.kpo@example.com",
+  fullName: "Analista Demo KPO",
+  role: "analyst",
+};
 
 function required(...names) {
   for (const name of names) {
@@ -88,12 +64,40 @@ function makeInvitationCode() {
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
 }
 
+function safeFileName(document) {
+  return `${document.normNumber
+    .normalize("NFKD")
+    .replace(/[^\w-]+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80)}.pdf`;
+}
+
+function validatePdfBytes(document, bytes, source) {
+  if (bytes.length > MAX_PDF_BYTES) {
+    throw new Error(`El PDF supera el límite de 25 MB (${source}): ${document.title}`);
+  }
+  if (!bytes.subarray(0, 5).equals(Buffer.from("%PDF-"))) {
+    throw new Error(`El recurso no parece un PDF (${source}): ${document.title}`);
+  }
+  return bytes;
+}
+
 async function fetchPdf(document) {
+  const filePath = join(CACHE_DIR, safeFileName(document));
+  try {
+    const cached = await readFile(filePath);
+    return validatePdfBytes(document, cached, "caché local");
+  } catch (error) {
+    if (error instanceof Error && !error.message.includes("ENOENT")) throw error;
+  }
+
+  log(`Descargando PDF: ${document.title}`);
   const response = await fetch(document.url, {
     method: "GET",
+    redirect: "follow",
     headers: {
-      "user-agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+      "user-agent": USER_AGENT,
+      accept: "application/pdf,*/*;q=0.8",
     },
   });
 
@@ -101,78 +105,71 @@ async function fetchPdf(document) {
     throw new Error(`HTTP ${response.status} al descargar ${document.url}`);
   }
 
-  const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
-  if (!contentType.includes("application/pdf")) {
-    throw new Error(
-      `El recurso no es un PDF (${contentType || "sin content-type"}): ${document.url}`,
-    );
-  }
-
-  const length = Number(response.headers.get("content-length") ?? 0);
-  if (length > MAX_PDF_BYTES) {
-    throw new Error(`El PDF supera el límite de 25 MB: ${document.url}`);
-  }
-
   const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length > MAX_PDF_BYTES) {
-    throw new Error(`El PDF supera el límite de 25 MB: ${document.url}`);
-  }
-
+  validatePdfBytes(document, bytes, document.url);
+  await mkdir(CACHE_DIR, { recursive: true });
+  await writeFile(filePath, bytes);
   return bytes;
 }
 
 async function inspectPdf(document) {
-  const response = await fetch(document.url, {
-    method: "HEAD",
-    headers: {
-      "user-agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-    },
-  });
+  const bytes = await fetchPdf(document);
+  return { length: bytes.length, contentType: "application/pdf" };
+}
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} al verificar ${document.url}`);
-  }
-
-  const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
-  if (!contentType.includes("application/pdf")) {
-    throw new Error(
-      `El recurso no es un PDF (${contentType || "sin content-type"}): ${document.url}`,
-    );
-  }
-
-  const length = Number(response.headers.get("content-length") ?? 0);
-  if (length > MAX_PDF_BYTES) {
-    throw new Error(`El PDF supera el límite de 25 MB: ${document.url}`);
-  }
-
-  return { length, contentType };
+async function findGroup(service, column, value) {
+  if (!value) return null;
+  const { data, error } = await service
+    .from("groups")
+    .select("id,name,slug,is_active")
+    .eq(column, value)
+    .maybeSingle();
+  if (error) throw new Error(`No se pudo consultar el grupo demo: ${error.message}`);
+  return data ?? null;
 }
 
 async function ensureGroup(service) {
-  const { data: existing, error } = await service
-    .from("groups")
-    .select("id,name,slug,is_active")
-    .eq("slug", GROUP.slug)
-    .maybeSingle();
+  let existing = await findGroup(service, "id", GROUP.reuseGroupId);
+  if (!existing) existing = await findGroup(service, "slug", GROUP.slug);
+  if (!existing && GROUP.replaceSlug) {
+    existing = await findGroup(service, "slug", GROUP.replaceSlug);
+  }
 
-  if (error) throw new Error(`No se pudo consultar el grupo demo: ${error.message}`);
   if (existing) {
-    if (!existing.is_active || existing.name !== GROUP.name) {
+    const needsUpdate =
+      !existing.is_active ||
+      existing.name !== GROUP.name ||
+      existing.slug !== GROUP.slug;
+
+    if (needsUpdate) {
       if (APPLY) {
+        const conflict = await findGroup(service, "slug", GROUP.slug);
+        if (conflict && conflict.id !== existing.id) {
+          throw new Error(
+            `Ya existe otro grupo con el slug ${GROUP.slug} (${conflict.id}).`,
+          );
+        }
         const { error: updateError } = await service
           .from("groups")
-          .update({ name: GROUP.name, is_active: true, updated_at: new Date().toISOString() })
+          .update({
+            name: GROUP.name,
+            slug: GROUP.slug,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", existing.id);
         if (updateError) {
           throw new Error(`No se pudo actualizar el grupo demo: ${updateError.message}`);
         }
-        log(`Grupo actualizado: ${GROUP.name} (${existing.id})`);
-      } else {
-        log(`Grupo existente requiere ajuste: ${GROUP.name} (${existing.id})`);
+        log(`Grupo actualizado: ${GROUP.name} [${GROUP.slug}] (${existing.id})`);
+        return { ...existing, name: GROUP.name, slug: GROUP.slug, is_active: true };
       }
+      log(
+        `Actualizar grupo: ${existing.name} [${existing.slug}] → ` +
+          `${GROUP.name} [${GROUP.slug}] (${existing.id})`,
+      );
     } else {
-      log(`Grupo existente: ${GROUP.name} (${existing.id})`);
+      log(`Grupo existente: ${GROUP.name} [${GROUP.slug}] (${existing.id})`);
     }
     return existing;
   }
@@ -236,7 +233,7 @@ async function findAuthUserByEmail(service, email) {
   }
 }
 
-async function ensureMembership(service, userId, groupId, role) {
+async function ensureMembership(service, userId, groupId, role, groupSlug) {
   const { data: existing, error } = await service
     .from("group_memberships")
     .select("id,role,status")
@@ -250,7 +247,7 @@ async function ensureMembership(service, userId, groupId, role) {
 
   if (existing) {
     if (existing.role === role && existing.status === "active") {
-      log(`Membresía existente: ${role} en ${GROUP.slug}`);
+      log(`Membresía existente: ${role} en ${groupSlug}`);
       return false;
     }
 
@@ -262,15 +259,15 @@ async function ensureMembership(service, userId, groupId, role) {
       if (updateError) {
         throw new Error(`No se pudo actualizar la membresía demo: ${updateError.message}`);
       }
-      log(`Membresía actualizada: ${role} en ${GROUP.slug}`);
+      log(`Membresía actualizada: ${role} en ${groupSlug}`);
     } else {
-      log(`Actualizar membresía: ${role} en ${GROUP.slug}`);
+      log(`Actualizar membresía: ${role} en ${groupSlug}`);
     }
     return true;
   }
 
   if (!APPLY) {
-    log(`Crear membresía: ${role} en ${GROUP.slug}`);
+    log(`Crear membresía: ${role} en ${groupSlug}`);
     return true;
   }
 
@@ -282,7 +279,7 @@ async function ensureMembership(service, userId, groupId, role) {
     throw new Error(`No se pudo crear la membresía demo: ${insertError.message}`);
   }
 
-  log(`Membresía creada: ${role} en ${GROUP.slug}`);
+  log(`Membresía creada: ${role} en ${groupSlug}`);
   return true;
 }
 
@@ -293,11 +290,14 @@ async function ensureUser(
   superadminId,
   credentials,
   existingPasswords = new Map(),
+  groupSlug = GROUP.slug,
 ) {
   const profile = await findProfileByEmail(service, user.email);
   const authUser = profile ? null : await findAuthUserByEmail(service, user.email);
   const userId = profile?.id ?? authUser?.id ?? null;
-  const password = makePassword();
+  const password =
+    process.env[`DEMO_${user.key.toUpperCase()}_PASSWORD`]?.trim() ||
+    makePassword();
 
   if (userId) {
     log(`Usuario existente: ${user.email} (${userId})`);
@@ -312,7 +312,7 @@ async function ensureUser(
         if (error) {
           throw new Error(`No se pudo rotar la contraseña de ${user.email}: ${error.message}`);
         }
-        credentials.push({ ...user, password, existing: true, rotated: true });
+        credentials.push({ ...user, password, existing: true, rotated: true, groupSlug });
         log(`Contraseña rotada: ${user.email}`);
       }
     } else {
@@ -327,6 +327,7 @@ async function ensureUser(
           password: knownPassword,
           existing: true,
           rotated: false,
+          groupSlug,
         });
         log(`Contraseña reutilizada: ${user.email}`);
       } else {
@@ -336,9 +337,9 @@ async function ensureUser(
       }
     }
     if (groupId) {
-      await ensureMembership(service, userId, groupId, user.role);
+      await ensureMembership(service, userId, groupId, user.role, groupSlug);
     } else {
-      log(`Asegurar membresía: ${user.role} en ${GROUP.slug}`);
+      log(`Asegurar membresía: ${user.role} en ${groupSlug}`);
     }
     return userId;
   }
@@ -394,8 +395,8 @@ async function ensureUser(
     .update({ revoked_at: new Date().toISOString() })
     .eq("id", invitation.id);
 
-  await ensureMembership(service, created.user.id, groupId, user.role);
-  credentials.push({ ...user, password, existing: false, rotated: false });
+  await ensureMembership(service, created.user.id, groupId, user.role, groupSlug);
+  credentials.push({ ...user, password, existing: false, rotated: false, groupSlug });
   log(`Usuario creado: ${user.email} [${user.role}]`);
   return created.user.id;
 }
@@ -637,6 +638,145 @@ async function ingestDocument(service, client, token, groupId, document) {
   throw new Error(`No se pudo ingerir ${document.title}: ${lastMessage}`);
 }
 
+async function listGroupDocuments(service, groupId) {
+  const { data, error } = await service
+    .from("documents")
+    .select(
+      "id,title,norm_number,status,published_version_id,source_bucket,source_path",
+    )
+    .eq("group_id", groupId);
+
+  if (error) throw new Error(`No se pudieron listar los documentos demo: ${error.message}`);
+  return data ?? [];
+}
+
+async function verifyCorpusPublished(service, groupId) {
+  const documents = await listGroupDocuments(service, groupId);
+  const missing = DOCUMENTS.filter((expected) => {
+    const current = documents.find((document) => document.title === expected.title);
+    return !current || (!current.published_version_id && current.status !== "published");
+  });
+
+  if (missing.length) {
+    throw new Error(
+      `Faltan documentos publicados antes de reemplazar:\n- ${missing
+        .map((document) => document.title)
+        .join("\n- ")}`,
+    );
+  }
+
+  return documents;
+}
+
+async function deleteObsoleteDocuments(service, groupId, groupDocuments) {
+  const keep = new Set(DOCUMENTS.map((document) => document.title));
+  const obsolete = groupDocuments.filter((document) => !keep.has(document.title));
+  if (!obsolete.length) {
+    log("No hay documentos antiguos por eliminar.");
+    return [];
+  }
+
+  const ids = obsolete.map((document) => document.id);
+  const { data: versions, error: versionError } = await service
+    .from("document_versions")
+    .select("document_id,extracted_bucket,extracted_path")
+    .in("document_id", ids);
+
+  if (versionError) {
+    throw new Error(`No se pudieron leer las versiones antiguas: ${versionError.message}`);
+  }
+
+  const removals = new Map();
+  const addRemoval = (bucket, path) => {
+    if (!bucket || !path) return;
+    if (!removals.has(bucket)) removals.set(bucket, new Set());
+    removals.get(bucket).add(path);
+  };
+
+  for (const document of obsolete) {
+    addRemoval(document.source_bucket, document.source_path);
+  }
+  for (const version of versions ?? []) {
+    addRemoval(version.extracted_bucket, version.extracted_path);
+  }
+
+  const { error: deleteError } = await service
+    .from("documents")
+    .delete()
+    .in("id", ids);
+
+  if (deleteError) {
+    throw new Error(`No se pudieron eliminar los documentos antiguos: ${deleteError.message}`);
+  }
+
+  for (const [bucket, paths] of removals) {
+    const { error } = await service.storage.from(bucket).remove([...paths]);
+    if (error) {
+      log(`Advertencia: no se pudieron borrar ${paths.size} archivo(s) de ${bucket}: ${error.message}`);
+    }
+  }
+
+  log(`Documentos antiguos eliminados: ${obsolete.map((document) => document.title).join(", ")}`);
+  return obsolete;
+}
+
+async function ensureSimulatorCases(service, groupId) {
+  const cases = Array.isArray(manifest.evaluationCases) ? manifest.evaluationCases : [];
+  if (!cases.length) return;
+
+  const documents = await listGroupDocuments(service, groupId);
+  const documentByTitle = new Map(
+    documents.map((document) => [document.title, document.id]),
+  );
+  const { data: existing, error } = await service
+    .from("simulator_cases")
+    .select("id,title")
+    .eq("group_id", groupId);
+  if (error) {
+    throw new Error(`No se pudieron leer los casos del simulador: ${error.message}`);
+  }
+  const existingByTitle = new Map((existing ?? []).map((item) => [item.title, item.id]));
+
+  let created = 0;
+  let updated = 0;
+  for (const item of cases) {
+    const expectedDocumentId = item.expectedDocumentTitle
+      ? documentByTitle.get(item.expectedDocumentTitle) ?? null
+      : null;
+    const row = {
+      group_id: groupId,
+      title: item.title,
+      question: item.question,
+      expected_outcome: item.expectedOutcome,
+      expected_document_id: expectedDocumentId,
+      expected_terms: Array.isArray(item.expectedTerms) ? item.expectedTerms : [],
+      notes: item.notes ?? null,
+      is_active: true,
+    };
+    const id = existingByTitle.get(item.title);
+    if (id) {
+      const { error: updateError } = await service
+        .from("simulator_cases")
+        .update(row)
+        .eq("id", id);
+      if (updateError) {
+        throw new Error(`No se pudo actualizar el caso ${item.title}: ${updateError.message}`);
+      }
+      updated += 1;
+    } else {
+      const { error: insertError } = await service
+        .from("simulator_cases")
+        .insert(row);
+      if (insertError) {
+        throw new Error(`No se pudo crear el caso ${item.title}: ${insertError.message}`);
+      }
+      created += 1;
+    }
+  }
+
+  log(`Casos del simulador: ${created} creados, ${updated} actualizados.`);
+}
+
 async function loadLatestCredentials() {
   let files = [];
   try {
@@ -668,12 +808,13 @@ async function writeCredentialsFile(credentials, groupId) {
   const path = join(TEMP_DIR, `demo-credentials-${stamp}.json`);
   const payload = {
     generatedAt: new Date().toISOString(),
-    group: { ...GROUP, id: groupId },
+    group: { name: GROUP.name, slug: GROUP.slug, id: groupId },
     app: "https://kpo-agent-ai.vercel.app/login",
     users: credentials.map((user) => ({
       role: user.role,
       email: user.email,
       password: user.password,
+      group: user.groupSlug ?? GROUP.slug,
       public: user.role === "analyst",
     })),
   };
@@ -697,8 +838,14 @@ async function main() {
 
   log(`Grupo demo: ${GROUP.name} [${GROUP.slug}]`);
   log(`Worker: ${process.env.DEMO_WORKER_URL?.replace(/\/+$/, "") || DEFAULT_WORKER_URL}`);
-  log(`Usuarios demo: ${USERS.map((user) => `${user.email} (${user.role})`).join(", ")}`);
+  log(
+    `Usuarios demo: ${[...USERS, KPO_DEMO_USER]
+      .map((user) => `${user.email} (${user.role})`)
+      .join(", ")}`,
+  );
   log(`Documentos demo: ${DOCUMENTS.length}`);
+  log(`Caché PDF: ${CACHE_DIR}`);
+  log(`Reemplazo de documentos: ${REPLACE ? "sí" : "no"}`);
 
   for (const document of DOCUMENTS) {
     const info = await inspectPdf(document);
@@ -708,12 +855,26 @@ async function main() {
   }
 
   const group = await ensureGroup(service);
+  const kpoGroup = await findGroup(service, "slug", KPO_GROUP_SLUG);
+  if (!kpoGroup) {
+    throw new Error(`No se encontró el grupo KPO con slug ${KPO_GROUP_SLUG}.`);
+  }
+  log(`Grupo KPO: ${kpoGroup.name} [${kpoGroup.slug}]`);
   const existingPasswords = await loadLatestCredentials();
 
   if (!APPLY) {
     for (const user of USERS) {
       await ensureUser(service, user, null, null, [], existingPasswords);
     }
+    await ensureUser(
+      service,
+      KPO_DEMO_USER,
+      null,
+      null,
+      [],
+      existingPasswords,
+      KPO_GROUP_SLUG,
+    );
     log("Dry-run completado. Ejecuta con --apply para crear grupo, usuarios y documentos.");
     return;
   }
@@ -735,6 +896,16 @@ async function main() {
       existingPasswords,
     );
   }
+
+  await ensureUser(
+    service,
+    KPO_DEMO_USER,
+    kpoGroup.id,
+    superadminId,
+    credentials,
+    existingPasswords,
+    KPO_GROUP_SLUG,
+  );
 
   const saved = await writeCredentialsFile(credentials, groupId);
 
@@ -769,17 +940,41 @@ async function main() {
         `Fallaron ${failures.length} documento(s):\n- ${failures.join("\n- ")}`,
       );
     }
+
+    if (REPLACE) {
+      const groupDocuments = await verifyCorpusPublished(service, groupId);
+      await deleteObsoleteDocuments(service, groupId, groupDocuments);
+      const remaining = await listGroupDocuments(service, groupId);
+      if (remaining.length !== DOCUMENTS.length) {
+        throw new Error(
+          `El grupo quedó con ${remaining.length} documentos; se esperaban ${DOCUMENTS.length}.`,
+        );
+      }
+      log(`Grupo reemplazado: ${remaining.length} documentos vigentes.`);
+    } else {
+      const groupDocuments = await listGroupDocuments(service, groupId);
+      const keep = new Set(DOCUMENTS.map((document) => document.title));
+      const extra = groupDocuments.filter((document) => !keep.has(document.title));
+      if (extra.length) {
+        log(
+          `Advertencia: hay ${extra.length} documento(s) fuera del manifiesto. ` +
+            "Ejecuta con --replace para eliminarlos.",
+        );
+      }
+    }
   } else {
     log("Documentos omitidos por --skip-documents.");
   }
 
-  console.log("\nCredenciales demo:");
+  await ensureSimulatorCases(service, groupId);
+
+  console.log("\nCuentas demo:");
   for (const user of saved.payload.users) {
     console.log(
-      `  ${user.public ? "pública " : "privada "} ${user.role.padEnd(12)} ${user.email} / ${user.password}`,
+      `  ${user.public ? "pública " : "privada "} ${user.role.padEnd(12)} ${user.email} (${user.group})`,
     );
   }
-  console.log(`\nArchivo: ${saved.path}`);
+  console.log(`\nContraseñas: ${saved.path}`);
   console.log("No confirmes este archivo en Git. Rota las contraseñas antes de una demo pública.");
 }
 

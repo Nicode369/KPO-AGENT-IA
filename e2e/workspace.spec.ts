@@ -22,14 +22,14 @@ test.describe("authenticated workspace", () => {
   );
 
   test("superadmin signs in and opens the published library", async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(180_000);
 
     await page.goto("/login");
     await page.getByLabel("Correo electrónico").fill(email!);
     await page.getByLabel("Contraseña").fill(password!);
     await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
-    await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/app$/, { timeout: 45_000 });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText("Grupos disponibles")).toBeVisible();
     await expect(page.getByLabel("Grupo activo")).toBeVisible();

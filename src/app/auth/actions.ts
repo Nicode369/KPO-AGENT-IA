@@ -3,6 +3,12 @@
 import { redirect } from "next/navigation";
 
 import { recordAuditEvent } from "@/lib/audit/log";
+import {
+  demoEmail,
+  demoGroupSlug,
+  demoPassword,
+  isDemoVariant,
+} from "@/lib/auth/demo";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -100,6 +106,96 @@ export async function signIn(formData: FormData) {
   });
 
   redirect("/app");
+}
+
+export async function startDemo(formData: FormData) {
+  if (!isSupabaseConfigured()) redirect("/login?error=not_configured");
+
+  const requestedVariant = field(formData, "demo");
+  if (!isDemoVariant(requestedVariant)) {
+    await recordAuditEvent({
+      eventType: "auth_demo_unavailable",
+      metadata: { reason: "invalid_variant" },
+    });
+    redirect("/login?error=demo_unavailable");
+  }
+
+  const variant = requestedVariant;
+  const email = demoEmail(variant)?.toLowerCase();
+  const password = demoPassword(variant);
+  const groupSlug = demoGroupSlug(variant);
+
+  if (!email || !password) {
+    await recordAuditEvent({
+      eventType: "auth_demo_unavailable",
+      metadata: { reason: "missing_configuration", demo: variant },
+    });
+    redirect("/login?error=demo_unavailable");
+  }
+
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.user) {
+    await recordAuditEvent({
+      eventType: "auth_demo_unavailable",
+      actorEmail: email,
+      metadata: { reason: "sign_in_failed", demo: variant },
+    });
+    redirect("/login?error=demo_unavailable");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_active")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  const { data: group } = await supabase
+    .from("groups")
+    .select("id")
+    .eq("slug", groupSlug)
+    .maybeSingle();
+
+  const { data: membership } = group
+    ? await supabase
+        .from("group_memberships")
+        .select("id")
+        .eq("group_id", group.id)
+        .eq("user_id", data.user.id)
+        .eq("status", "active")
+        .maybeSingle()
+    : { data: null };
+
+  if (!profile?.is_active || !group || !membership) {
+    await supabase.auth.signOut();
+    await recordAuditEvent({
+      eventType: "auth_demo_unavailable",
+      actorId: data.user.id,
+      actorEmail: email,
+      metadata: {
+        reason: !group ? "missing_group" : !membership ? "missing_membership" : "inactive",
+        demo: variant,
+      },
+    });
+    redirect("/login?error=demo_unavailable");
+  }
+
+  await recordAuditEvent({
+    eventType: "auth_demo_started",
+    actorId: data.user.id,
+    actorEmail: email,
+    targetType: "group",
+    targetId: group.id,
+    metadata: { group_slug: groupSlug, demo: variant },
+  });
+
+  redirect("/app?demo=1");
 }
 
 export async function signUp(formData: FormData) {

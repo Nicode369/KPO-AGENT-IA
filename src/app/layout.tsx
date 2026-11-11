@@ -16,7 +16,7 @@ const sans = Schibsted_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "KPO Agent AI · Consulta documental",
+  title: "RAG Agent AI · Consulta documental",
   description:
     "Consulta documental con permisos por grupo, trazabilidad y fuentes verificables.",
 };

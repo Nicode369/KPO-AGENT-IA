@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AuthFrame, AuthMessage } from "@/components/auth-frame";
+import { DemoButtons } from "@/components/demo-buttons";
 import { signIn } from "@/app/auth/actions";
 
 export const instant = false;
@@ -28,6 +29,10 @@ export default async function LoginPage({
         <input id="password" name="password" type="password" autoComplete="current-password" required />
         <button type="submit">Iniciar sesión</button>
       </form>
+      <div className="auth-demo">
+        <p className="auth-demo-label">o entra a una demo sin credenciales</p>
+        <DemoButtons variant="auth" />
+      </div>
     </AuthFrame>
   );
 }

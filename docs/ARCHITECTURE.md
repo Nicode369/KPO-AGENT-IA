@@ -1,6 +1,6 @@
-# Arquitectura — KPO Agent AI
+# Arquitectura — RAG Agent AI
 
-Documento técnico del Reto 3 KPO Agent AI. Describe componentes, flujos, modelo de datos, permisos, API, decisiones y límites conocidos.
+Documento técnico del Reto 3 RAG Agent AI. Describe componentes, flujos, modelo de datos, permisos, API, decisiones y límites conocidos.
 
 ## 1. Visión general
 
@@ -140,6 +140,10 @@ sequenceDiagram
 4. El trigger de `auth.users` valida y consume la invitación de forma atómica.
 5. Se crean `profiles` y `group_memberships`.
 6. El código se elimina de la metadata del usuario.
+
+### 4.1 Demo pública
+
+La landing, el login y `/caso-de-estudio` exponen dos botones que ejecutan la server action `startDemo` con la variante `kpo` o `clima`. La acción cierra cualquier sesión, inicia sesión con la cuenta configurada (`DEMO_KPO_*` o `DEMO_CLIMA_*`), valida perfil, grupo y membresía, registra `auth_demo_started` con la variante y el grupo, y redirige a `/app?demo=1`. El modo demo se deriva del correo del perfil, nunca de la URL; la sesión oculta Historial, bloquea administración y aplica `DEMO_RATE_LIMIT_PER_MINUTE` (60 por defecto). Cada variante ajusta el banner, las sugerencias y el grupo activo. La página `/caso-de-estudio` presenta el corpus climático, la arquitectura, los controles y las fuentes sin requerir sesión.
 
 ## 5. Flujo documental
 
@@ -503,6 +507,6 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 - Fase 6: cadena SHA-256, eventos de auth/admin/ciclo documental, visor, verificador, reportes y CSV; migraciones 9, 10 y 11 aplicadas.
 - Fase 7: simulador con casos, lotes, métricas y aislamiento del historial; migración 12 aplicada.
 - Fase 8 parcial: app en Vercel, Worker en Cloudflare y Supabase remoto; faltan smoke tests, backups y monitoreo.
-- El corpus de validación tiene 20 documentos y 1.606 fragmentos: 15 en KPO, 1 en BPO y 4 en la demo de compras públicas, todos publicados como `restricted`. El corpus KPO no se versiona en Git.
+- El corpus de validación tiene 39 documentos y 4.671 fragmentos: 15 en KPO, 1 en BPO y 23 en la demo de riesgo climático y datos abiertos, todos publicados como `restricted`. El corpus KPO no se versiona en Git.
 
 Consulta [`../README.md`](../README.md) para uso, [`DEPLOYMENT.md`](DEPLOYMENT.md) para publicación y [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) para el estado detallado.

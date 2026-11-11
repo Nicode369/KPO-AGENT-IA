@@ -8,9 +8,11 @@ import { HistoryIcon, LibraryIcon, ReportIcon, ShieldIcon } from "@/components/i
 export function WorkspaceNav({
   showAdmin,
   showSimulator,
+  showHistory,
 }: {
   showAdmin: boolean;
   showSimulator: boolean;
+  showHistory: boolean;
 }) {
   const pathname = usePathname();
   const isWorkspace = pathname === "/app";
@@ -28,14 +30,16 @@ export function WorkspaceNav({
         <LibraryIcon size={16} />
         Espacio
       </Link>
-      <Link
-        className={isHistory ? "active" : undefined}
-        href="/app/history"
-        aria-current={isHistory ? "page" : undefined}
-      >
-        <HistoryIcon size={16} />
-        Historial
-      </Link>
+      {showHistory ? (
+        <Link
+          className={isHistory ? "active" : undefined}
+          href="/app/history"
+          aria-current={isHistory ? "page" : undefined}
+        >
+          <HistoryIcon size={16} />
+          Historial
+        </Link>
+      ) : null}
       {showSimulator ? (
         <Link
           className={isSimulator ? "active" : undefined}

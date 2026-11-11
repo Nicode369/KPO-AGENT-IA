@@ -51,6 +51,7 @@ service-account*.json
 
 # local source corpus (not part of the repository)
 base_drive/
+data/demo-pdfs/
 
 # debug
 *.log

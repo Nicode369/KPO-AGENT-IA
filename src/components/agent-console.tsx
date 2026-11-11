@@ -10,13 +10,19 @@ type State =
   | { status: "error"; message: string }
   | { status: "success"; data: AgentQueryResponse };
 
-const SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   "¿Qué requisitos establece la circular sobre el trámite?",
   "Resume las obligaciones principales de la norma.",
   "¿Qué plazos o vigencias mencionan los documentos publicados?",
 ];
 
-export function AgentConsole() {
+export function AgentConsole({
+  suggestions = DEFAULT_SUGGESTIONS,
+  intro = "La respuesta usa recuperación semántica sobre los fragmentos autorizados y cita cada fuente. Si la evidencia no alcanza, el asistente se abstiene.",
+}: {
+  suggestions?: string[];
+  intro?: string;
+}) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<State>({ status: "idle" });
 
@@ -73,10 +79,7 @@ export function AgentConsole() {
         <span className="agent-scope">Solo documentos aprobados y publicados</span>
       </div>
 
-      <p className="agent-intro">
-        La respuesta usa recuperación semántica sobre los fragmentos autorizados y cita
-        cada fuente. Si la evidencia no alcanza, el asistente se abstiene.
-      </p>
+      <p className="agent-intro">{intro}</p>
 
       <form className="agent-form" onSubmit={onSubmit}>
         <label className="agent-label" htmlFor="agent-question">
@@ -109,7 +112,7 @@ export function AgentConsole() {
       {state.status === "idle" ? (
         <div className="agent-suggestions">
           <span>Sugerencias</span>
-          {SUGGESTIONS.map((suggestion) => (
+          {suggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"

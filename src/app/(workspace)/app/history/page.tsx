@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 
 import { HistoryIcon } from "@/components/icons";
 import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
+import { isDemoEmail } from "@/lib/auth/demo";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 import { formatDateTime } from "@/lib/datetime";
 
@@ -33,7 +35,8 @@ type HistorySource = {
 
 export default async function HistoryPage() {
   await connection();
-  const { supabase } = await requireWorkspaceUser();
+  const { supabase, profile } = await requireWorkspaceUser();
+  if (isDemoEmail(profile.email)) redirect("/app?demo=1");
 
   const { data, error } = await supabase
     .from("agent_queries")

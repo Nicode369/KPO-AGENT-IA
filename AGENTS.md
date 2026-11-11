@@ -1,4 +1,4 @@
-# KPO Agent AI — Agent Guide
+# RAG Agent AI — Agent Guide
 
 Project memory lives in [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md). Read that first; this file is the quick operating guide. Product overview: [`README.md`](README.md). Architecture and diagrams: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Deployment: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
@@ -98,7 +98,8 @@ npm run deploy       # requiere npx wrangler login
 - Superadmins use an active group stored in the `httpOnly` cookie `kpo_active_group`, resolved by `src/lib/auth/group-context.ts`. `/app` exposes the selector; agent queries are scoped to that group's published documents plus `common` and recorded with its `group_id`.
 - Dates are stored in UTC. Server-rendered UI and CSV exports use `America/Bogota`; date filters treat `from`/`to` as Colombian calendar days.
 - Cloudflare is authenticated. Worker `kpo-ingest` is deployed at `https://kpo-ingest.nicode.workers.dev` and responds `/health`.
-- `INGEST_WORKER_URL` is set in `.env.local`. The KPO corpus has 15 published documents (1,185 chunks), BPO has 1 (97 chunks) and the public demo group `compras-publicas` has 4 (324 chunks); all groups use `restricted` visibility. Run `npm run configure:groups -- --apply` for KPO/BPO and `npm run setup:demo -- --apply` for the demo group and accounts.
+- `INGEST_WORKER_URL` is set in `.env.local`. The KPO corpus has 15 published documents (1,185 chunks), BPO has 1 (97 chunks) and the public demo group `riesgo-climatico` has 23 (3,389 chunks); all groups use `restricted` visibility. Run `npm run configure:groups -- --apply` for KPO/BPO and `npm run setup:demo -- --apply --replace` for the demo groups and accounts. KPO demo auto-login requires `DEMO_KPO_EMAIL`, `DEMO_KPO_PASSWORD` and `DEMO_KPO_GROUP_SLUG=kpo`; climate demo auto-login requires `DEMO_CLIMA_EMAIL`, `DEMO_CLIMA_PASSWORD` and `DEMO_CLIMA_GROUP_SLUG=riesgo-climatico` (legacy `DEMO_ANALYST_*`/`DEMO_GROUP_SLUG` still work as fallback). Both use `DEMO_RATE_LIMIT_PER_MINUTE=60`.
+- The demo is validated end-to-end: landing → `/app?demo=1`, banner visible, Historial hidden, and cited answers. `/caso-de-estudio` is public. The free Worker plan hits its CPU limit on several large PDFs; for bulk ingestion run `npm run dev` in `workers/kpo-ingest` and use `DEMO_WORKER_URL=http://localhost:8787`.
 - OCR and `/chat` are validated against the live Workers AI binding. `Circular Externa 100-000015` was reprocessed with Mistral Small 3.1 and the agent answered the `631-5` question with a versioned citation.
 - The active `analyst` test account in the KPO group validated the non-superadmin agent flow. The A/B test groups and their exclusive test account were removed; the `/admin/users` membership table now exposes superadmin-only account deletion.
 - Remaining: validate the simulator against the deployed app, extend Playwright/E2E to analyst/group-admin flows, and finish production smoke tests (`APP_ORIGIN`, `INGEST_WORKER_URL` are still local in `.env.local`).
