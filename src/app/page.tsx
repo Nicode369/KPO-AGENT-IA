@@ -162,7 +162,7 @@ const securityControls = [
 
 export default function Home() {
   return (
-    <div className="site-shell">
+    <div className="site-shell landing-shell">
       <header className="site-header">
         <div className="site-header-inner">
           <a className="site-brand" href="#inicio" aria-label="RAG Agent AI, inicio">
@@ -185,6 +185,12 @@ export default function Home() {
 
       <main className="site-main" id="inicio">
         <section className="hero">
+          <div className="hero-figure" aria-hidden="true">
+            <span className="hero-figure-ring" />
+            <span className="hero-figure-grid" />
+            <span className="hero-figure-block" />
+            <span className="hero-figure-line" />
+          </div>
           <div className="hero-copy">
             <h1>Documentos que responden con <span className="hero-mark">evidencia.</span></h1>
             <p className="hero-lede">
@@ -329,7 +335,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="site-section" id="seguridad">
+        <section className="site-section site-section-red" id="seguridad">
           <div className="section-head">
             <div>
               <h2>Seguridad y control</h2>
@@ -386,7 +392,6 @@ export default function Home() {
         <footer className="site-footer">
           <span className="footer-brand"><BrandMark /> <strong>RAG Agent AI</strong></span>
           <span>La evidencia guía cada respuesta.</span>
-          <span>Reto 3 · Bootcamp CCB</span>
         </footer>
       </main>
     </div>

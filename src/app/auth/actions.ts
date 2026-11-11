@@ -324,5 +324,5 @@ export async function signOut() {
       actorEmail: email,
     });
   }
-  redirect("/login");
+  redirect("/");
 }

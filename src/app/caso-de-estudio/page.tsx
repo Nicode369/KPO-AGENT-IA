@@ -413,7 +413,6 @@ export default function CaseStudyPage() {
         <footer className="site-footer">
           <span className="footer-brand"><BrandMark /> <strong>RAG Agent AI</strong></span>
           <span>La evidencia guía cada respuesta.</span>
-          <span>Reto 3 · Bootcamp CCB</span>
         </footer>
       </main>
     </div>

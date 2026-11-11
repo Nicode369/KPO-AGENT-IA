@@ -17,6 +17,11 @@ export function AuthFrame({
   return (
     <main className="auth-page">
       <aside className="auth-aside">
+        <div className="auth-figure" aria-hidden="true">
+          <span className="auth-figure-ring" />
+          <span className="auth-figure-grid" />
+          <span className="auth-figure-line" />
+        </div>
         <Link className="auth-brand" href="/" aria-label="RAG Agent AI, inicio">
           <BrandMark />
           <span>RAG <i>/</i> AGENT</span>

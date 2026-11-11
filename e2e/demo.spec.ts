@@ -24,6 +24,7 @@ test.describe("public demo", () => {
       await expect(
         page.getByRole("button", { name: "DEMO CLIMA" }).first(),
       ).toBeVisible();
+      await expect(page.getByText("Reto 3 · Bootcamp CCB")).toHaveCount(0);
     }
   });
 
@@ -101,6 +102,20 @@ test.describe("public demo", () => {
       await expect(page.getByText(/POT municipal/)).toHaveCount(0);
     });
 
+    test("logout returns to the public landing", async ({ page }) => {
+      test.setTimeout(60_000);
+
+      await page.goto("/login");
+      await page.getByRole("button", { name: "DEMO KPO" }).click();
+      await expect(page).toHaveURL(/\/app\?demo=1/, { timeout: 30_000 });
+
+      await page.getByRole("button", { name: "Cerrar sesión" }).click();
+      await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+      await expect(
+        page.getByRole("heading", { level: 1, name: /Documentos que responden/ }),
+      ).toBeVisible();
+    });
+
     test("suggestions stay visible after an answer", async ({ page }) => {
       test.setTimeout(60_000);
 
@@ -165,6 +180,8 @@ test.describe("public demo", () => {
     await expect(page.getByText("documentos publicados").first()).toBeVisible();
     await expect(page.getByText("1.185").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "DEMO KPO" }).first()).toBeVisible();
+    await expect(page.locator(".case-corpus-grid-kpo .case-corpus-card")).toHaveCount(3);
+    await expect(page.locator(".case-corpus-summary")).toContainText("15");
   });
 
   test("case study links back to the climate demo", async ({ page }) => {

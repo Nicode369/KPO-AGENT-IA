@@ -54,7 +54,7 @@ const controls = [
 const corpus = [
   {
     title: "Circulares externas",
-    count: "10 documentos",
+    count: 10,
     copy: "Circulares de cumplimiento y circulares externas 100-000002, 100-000003, 100-000004, 100-000008, 100-000015, 100-000016, 100-000020 y 100-300000.",
     items: [
       "Circular Externa 100-000002 de 2025",
@@ -65,7 +65,7 @@ const corpus = [
   },
   {
     title: "Marco contable",
-    count: "1 documento",
+    count: 1,
     copy: "Normas de contabilidad, información financiera y aseguramiento aplicables a los estados financieros.",
     items: [
       "Decreto 2420 de 2015",
@@ -75,7 +75,7 @@ const corpus = [
   },
   {
     title: "Auditoría y cumplimiento",
-    count: "4 documentos",
+    count: 4,
     copy: "Material de apoyo para procedimientos, hallazgos, NIAs y gestión de riesgos de lavado de activos.",
     items: [
       "Guía práctica de NIAs",
@@ -85,6 +85,8 @@ const corpus = [
     ],
   },
 ];
+
+const corpusTotal = corpus.reduce((total, card) => total + card.count, 0);
 
 const questions = questionsForSlug("kpo");
 
@@ -287,12 +289,28 @@ export default function KpoCaseStudyPage() {
               trabajo.
             </p>
           </div>
-          <div className="case-corpus-grid">
+          <div className="case-corpus-summary">
+            <div className="case-corpus-summary-copy">
+              <strong>{corpusTotal}</strong>
+              <span>documentos publicados en el corpus KPO</span>
+            </div>
+            <div className="case-corpus-bar" aria-hidden="true">
+              {corpus.map((card) => (
+                <span
+                  key={card.title}
+                  style={{ flexGrow: card.count }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="case-corpus-grid case-corpus-grid-kpo">
             {corpus.map((card) => (
               <article className="case-corpus-card" key={card.title}>
                 <div className="case-corpus-head">
                   <h3>{card.title}</h3>
-                  <span>{card.count}</span>
+                  <span>
+                    {card.count} {card.count === 1 ? "documento" : "documentos"}
+                  </span>
                 </div>
                 <p>{card.copy}</p>
                 <ul>
