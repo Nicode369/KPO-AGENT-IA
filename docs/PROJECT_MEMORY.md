@@ -19,7 +19,7 @@ Web app for document consultation in audit, accounting and compliance. Phases 1�
 - `/` — landing.
 - `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` — public auth.
 - `/app` — signed-in dashboard and document agent. Requires an active profile and membership (or superadmin).
-- `/app/history` — personal query history with outcome, model, latency, grounding and sources.
+- `/app/history` — personal query history with outcome, model, latency, grounding and sources; superadmin history is scoped to the active group.
 - `/app/simulator` — simulator for superadmins, group admins and supervisors: cases, batch execution and metrics.
 - `/api/simulator/run` — `start`, `case` and `finish` actions; reuses `runAgentQuery` with history and rate limit disabled.
 - `/admin`, `/admin/groups`, `/admin/invitations`, `/admin/users` — access administration.
@@ -179,7 +179,7 @@ Manual checks:
 - Upload a new version while the document is `published`; verify the old version remains queryable until the new one is published.
 - Reprocess a failed document and verify access restrictions with a group admin from another group.
 - `/app`: ask a question answerable by the published corpus; confirm citations link to sources. Ask an unrelated question; confirm the exact abstention text and no sources. Try a prompt-injection or secret request; confirm it is blocked and appears in history.
-- `/app/history`: confirm the query, outcome, model, latency, grounding and source snapshots are visible only to the same user.
+- `/app/history`: confirm the query, outcome, model, latency, grounding and source snapshots are visible only to the same user; as superadmin, confirm the history is scoped to the active group and combines with category filters.
 - `/admin/audit`: as superadmin, confirm queries from every group are visible with full detail and filters; as `group_admin`, confirm only queries from the managed groups appear and the group filter cannot be escaped.
 - `/admin/audit/events`: confirm login/logout, failed auth, admin changes, document lifecycle and export events appear with labels and hashes; run **Verificar integridad** and check the success panel; as `group_admin`, confirm only events for managed groups (plus his own scoped exports) are listed.
 - `/admin/reports`: confirm 24 h counts, document status table, last hash and both CSV downloads; each download must append an `audit_export` event.

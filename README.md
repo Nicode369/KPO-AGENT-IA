@@ -107,7 +107,7 @@ El repositorio incluye una validación con **38 documentos y 4.574 fragmentos**:
   - acceso a información de otros grupos;
   - extracción masiva de documentos.
 - Límite de 20 consultas por minuto por usuario.
-- Historial personal en `/app/history` con resultado, modelo, latencia, grounding y fuentes.
+- Historial personal en `/app/history` con resultado, modelo, latencia, grounding y fuentes; para superadmin se acota al grupo activo.
 - Auditoría en `agent_queries` y `agent_query_sources`, incluyendo hashes de pregunta y respuesta.
 - Cadena global append-only `audit_events` con SHA-256: cada evento enlaza el hash anterior.
 - Registro de login/logout, fallos de autenticación, cambios administrativos, ciclo documental, denegaciones de acceso, exportaciones y verificaciones de integridad.
@@ -395,7 +395,7 @@ Las migraciones 1–13 están aplicadas en el proyecto remoto usado durante el d
 | `/caso-de-estudio/kpo` | Público | Caso de estudio KPO de auditoría y cumplimiento |
 | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | Público | Flujos de autenticación |
 | `/app` | Usuario activo | Dashboard, consola del agente y selector de grupo activo para superadmin |
-| `/app/history` | Usuario activo | Historial personal; en demos es compartido y filtrado por grupo |
+| `/app/history` | Usuario activo | Historial personal; en demos es compartido y filtrado por grupo; para superadmin se acota al grupo activo |
 | `/app/simulator` | Superadmin / `group_admin` / `supervisor` | Casos, ejecución y métricas del simulador |
 | `/admin` | Superadmin / `group_admin` | Resumen administrativo |
 | `/admin/groups` | Superadmin | Crear y listar grupos |

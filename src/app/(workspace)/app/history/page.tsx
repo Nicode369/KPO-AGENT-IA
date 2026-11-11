@@ -10,6 +10,7 @@ import {
   REASON_LABELS,
 } from "@/lib/agent/labels";
 import { demoGroupSlug, demoVariantForEmail } from "@/lib/auth/demo";
+import { getSuperadminGroupContext } from "@/lib/auth/group-context";
 import { demoCopy } from "@/lib/demo/variants";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 import { formatDateTime } from "@/lib/datetime";
@@ -53,6 +54,13 @@ export default async function HistoryPage({
   const { supabase, profile, memberships } = await requireWorkspaceUser();
   const demoVariant = demoVariantForEmail(profile.email);
   const demo = demoCopy(demoVariant);
+  const groupContext =
+    profile.is_superadmin && !demoVariant
+      ? await getSuperadminGroupContext(supabase, true)
+      : null;
+  const activeGroup = groupContext?.activeGroup ?? null;
+  const scopedByActiveGroup = Boolean(profile.is_superadmin && !demoVariant);
+  const missingActiveGroup = scopedByActiveGroup && !activeGroup;
 
   let demoGroupId: string | null = null;
   if (demoVariant) {
@@ -74,13 +82,17 @@ export default async function HistoryPage({
 
   if (demoVariant && demoGroupId) {
     request = request.contains("group_ids", [demoGroupId]);
+  } else if (activeGroup) {
+    request = request.contains("group_ids", [activeGroup.id]);
   }
   if (selectedOutcome) {
     request = request.eq("outcome", selectedOutcome);
   }
 
   const { data, error } =
-    demoVariant && !demoGroupId ? { data: [], error: null } : await request;
+    (demoVariant && !demoGroupId) || missingActiveGroup
+      ? { data: [], error: null }
+      : await request;
   const queries = (data ?? []) as HistoryQuery[];
   const sourcesByQuery = new Map<string, HistorySource[]>();
 
@@ -108,8 +120,19 @@ export default async function HistoryPage({
           <p className="workspace-lead">
             {demo
               ? `Consultas realizadas por todas las personas que exploran ${demo.library}. Se muestran todas las categorías, incluidas las bloqueadas, rechazadas y con error. Usa los filtros para revisarlas. No escribas datos personales.`
-              : "Cada consulta registra su pregunta, respuesta, resultado y fuentes. Usa los filtros por categoría para revisar el historial personal de tus grupos."}
+              : profile.is_superadmin
+                ? "Cada consulta registra su pregunta, respuesta, resultado y fuentes. El historial se filtra por tu grupo activo; usa las categorías para revisarlo."
+                : "Cada consulta registra su pregunta, respuesta, resultado y fuentes. Usa los filtros por categoría para revisar el historial personal de tus grupos."}
           </p>
+          {scopedByActiveGroup ? (
+            <p className="history-scope">
+              <span className="admin-tag admin-tag-muted">Grupo activo</span>
+              <strong>{activeGroup?.name ?? "Sin grupo"}</strong>
+              <Link href="/app">
+                {activeGroup ? "Cambiar grupo" : "Seleccionar grupo"}
+              </Link>
+            </p>
+          ) : null}
         </div>
         <Link className="button button-secondary" href="/app">
           Volver al asistente
@@ -156,22 +179,32 @@ export default async function HistoryPage({
         <section className="history-empty">
           <HistoryIcon size={28} />
           <h2>
-            {selectedOutcome
-              ? `No hay consultas en "${OUTCOME_LABELS[selectedOutcome]}"`
-              : "Todavía no hay consultas registradas"}
+            {missingActiveGroup
+              ? "Selecciona un grupo activo"
+              : selectedOutcome
+                ? `No hay consultas en "${OUTCOME_LABELS[selectedOutcome]}"${activeGroup ? ` para el grupo ${activeGroup.name}` : ""}`
+                : activeGroup
+                  ? `Todavía no hay consultas en el grupo ${activeGroup.name}`
+                  : "Todavía no hay consultas registradas"}
           </h2>
           <p>
-            {selectedOutcome
-              ? "Prueba otra categoría o limpia el filtro para ver todo el historial."
-              : demo
-                ? "Haz una pregunta en esta demo y aparecerá aquí para las próximas personas que la visiten."
-                : "Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes."}
+            {missingActiveGroup
+              ? "El historial del superadmin se acota al grupo activo. Elige un grupo en el asistente para consultar sus registros."
+              : selectedOutcome
+                ? "Prueba otra categoría o limpia el filtro para ver todo el historial."
+                : demo
+                  ? "Haz una pregunta en esta demo y aparecerá aquí para las próximas personas que la visiten."
+                  : "Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes."}
           </p>
           <Link
             className="button button-secondary"
-            href={selectedOutcome ? "/app/history" : "/app"}
+            href={missingActiveGroup ? "/app" : selectedOutcome ? "/app/history" : "/app"}
           >
-            {selectedOutcome ? "Ver todas las categorías" : "Ir al asistente"}
+            {missingActiveGroup
+              ? "Elegir grupo"
+              : selectedOutcome
+                ? "Ver todas las categorías"
+                : "Ir al asistente"}
           </Link>
         </section>
       ) : null}

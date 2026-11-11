@@ -3281,6 +3281,31 @@ button {
   margin-bottom: 0;
 }
 
+.history-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
+.history-scope strong {
+  color: var(--ink);
+}
+
+.history-scope a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.history-scope a:hover {
+  color: var(--red-600);
+}
+
 .history-head > .button {
   flex: 0 0 auto;
 }

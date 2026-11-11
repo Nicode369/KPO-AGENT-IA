@@ -49,6 +49,20 @@ test.describe("authenticated workspace", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Historial de consultas" }),
     ).toBeVisible();
+    const historyScope = page.locator(".history-scope");
+    await expect(historyScope).toContainText("Grupo activo");
+    await expect(historyScope).toContainText("KPO");
+    const historyFilters = page.getByRole("navigation", {
+      name: "Filtrar por categoría",
+    });
+    await expect(historyFilters.getByRole("link")).toHaveCount(7);
+    await historyFilters.getByRole("link", { name: "Respondida" }).click();
+    await expect(page).toHaveURL(/\/app\/history\?outcome=answered/);
+    await expect(
+      historyFilters.getByRole("link", { name: "Respondida" }),
+    ).toHaveAttribute("aria-current", "page");
+    await historyFilters.getByRole("link", { name: "Todas" }).click();
+    await expect(page).toHaveURL(/\/app\/history$/);
     await expectNoNextRuntimeError(page);
 
     await page.goto("/app/simulator");
