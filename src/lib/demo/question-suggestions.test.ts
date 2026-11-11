@@ -4,9 +4,9 @@ import { questionsForSlug } from "./question-suggestions";
 
 describe("question suggestions", () => {
   it("returns the seeded questions for KPO and climate", () => {
-    expect(questionsForSlug("kpo")).toHaveLength(6);
+    expect(questionsForSlug("kpo")).toHaveLength(8);
     expect(questionsForSlug("riesgo-climatico")).toHaveLength(6);
-    expect(questionsForSlug("kpo")[0]).toMatch(/100-000015/);
+    expect(questionsForSlug("kpo")[0]).toMatch(/NIA/);
     expect(questionsForSlug("riesgo-climatico")[0]).toMatch(/POT/);
   });
 

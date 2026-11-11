@@ -35,6 +35,7 @@ export const REASON_LABELS: Record<string, string> = {
   evidence_tampering: "Intento de ocultar o alterar hallazgos o evidencia.",
   citation_bypass: "Intento de responder sin fuentes o con conocimiento externo.",
   data_exfiltration: "Intento de extraer datos de forma masiva.",
+  fabrication_request: "Intento de inventar normas, fuentes o evidencia.",
   output_guard_system_prompt_leak: "La respuesta intentó revelar instrucciones internas.",
   output_guard_secret_leak: "La respuesta contenía un posible secreto.",
   output_guard_destructive_confirmation:

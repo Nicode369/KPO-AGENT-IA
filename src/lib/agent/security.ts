@@ -10,7 +10,8 @@ export type SecurityCode =
   | "destructive_action"
   | "evidence_tampering"
   | "citation_bypass"
-  | "data_exfiltration";
+  | "data_exfiltration"
+  | "fabrication_request";
 
 export type SecurityBlock = {
   code: SecurityCode;
@@ -51,6 +52,8 @@ const MESSAGES: Record<SecurityCode, string> = {
     "No puedo responder sin fuentes ni usar conocimiento externo a los documentos publicados.",
   data_exfiltration:
     "No puedo exportar datos masivamente ni acceder a información fuera de tu grupo.",
+  fabrication_request:
+    "No puedo inventar normas, fuentes, citas ni evidencia.",
 };
 
 type Rule = {
@@ -179,6 +182,27 @@ const RULES: Rule[] = [
     severity: "high",
     pattern:
       /\b(oculta|ocultar|elimina|eliminar|borra|borrar|ignora|ignorar|descarta|descartar|minimiza|minimizar|manipula|manipular|falsifica|falsificar)\b.*\b(hallazgo|hallazgos|evidencia|fraude|lavado|incidente|riesgo|conclusion|informe|auditoria)\b/,
+  },
+  {
+    code: "data_exfiltration",
+    action: "block",
+    severity: "high",
+    pattern:
+      /\b(lista|listado|muestra|revela|dame|entrega|comparte)\b.*\b(clientes?|contratos?|saldos?)\b.*\b(confidencial|secreta|privad|bancari)/,
+  },
+  {
+    code: "evidence_tampering",
+    action: "block",
+    severity: "high",
+    pattern:
+      /\b(oculta|ocultar|esconde|esconder|encubre|encubrir|borra|borrar|elimina|eliminar|minimiza|minimizar)\b.*\b(inconsistencias?|impuestos?|tributari[oa]s?|dian)\b/,
+  },
+  {
+    code: "fabrication_request",
+    action: "block",
+    severity: "high",
+    pattern:
+      /\b(escribe|redacta|crea|inventa|alucina|falsifica|fabrica)\b.*\b(norma|documento|fuente|cita|hallazgo|informe)\b.*\b(falsa?|falso|inexistente|que (apruebe|justifique|valide))\b/,
   },
   {
     code: "citation_bypass",

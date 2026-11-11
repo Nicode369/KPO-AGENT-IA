@@ -115,33 +115,32 @@ export function AgentConsole({
         </small>
       </form>
 
-      {state.status === "idle" ? (
-        <div className="agent-suggestions">
-          <span>Preguntas sugeridas</span>
-          {(suggestionGroups.length
-            ? suggestionGroups
-            : [{ id: "default", label: "", questions: DEFAULT_SUGGESTIONS }]
-          ).map((group) => (
-            <div className="agent-suggestion-group" key={group.id}>
-              {group.label ? <strong>{group.label}</strong> : null}
-              <div className="agent-suggestion-buttons">
-                {group.questions.map((suggestion) => (
-                  <button
-                    key={`${group.id}-${suggestion}`}
-                    type="button"
-                    onClick={() => {
-                      setQuestion(suggestion);
-                      void ask(suggestion);
-                    }}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
+      <div className="agent-suggestions">
+        <span>Preguntas sugeridas</span>
+        {(suggestionGroups.length
+          ? suggestionGroups
+          : [{ id: "default", label: "", questions: DEFAULT_SUGGESTIONS }]
+        ).map((group) => (
+          <div className="agent-suggestion-group" key={group.id}>
+            {group.label ? <strong>{group.label}</strong> : null}
+            <div className="agent-suggestion-buttons">
+              {group.questions.map((suggestion) => (
+                <button
+                  key={`${group.id}-${suggestion}`}
+                  type="button"
+                  disabled={state.status === "loading"}
+                  onClick={() => {
+                    setQuestion(suggestion);
+                    void ask(suggestion);
+                  }}
+                >
+                  {suggestion}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : null}
+          </div>
+        ))}
+      </div>
 
       {state.status === "loading" ? (
         <div className="agent-loading" role="status">

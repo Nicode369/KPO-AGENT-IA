@@ -2,6 +2,8 @@
 import { readFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
 
+import { seedQuestionSuggestions } from "./lib/question-suggestions.mjs";
+
 const APPLY = process.argv.includes("--apply");
 const SUGGESTIONS_PATH = new URL("../data/question-suggestions.json", import.meta.url);
 
@@ -43,31 +45,8 @@ async function main() {
     log(`${group.name}: ${questions.length} preguntas sugeridas.`);
     if (!APPLY) continue;
 
-    const { error: deleteError } = await service
-      .from("group_question_suggestions")
-      .delete()
-      .eq("group_id", group.id);
-    if (deleteError) {
-      throw new Error(
-        `Aplica la migración 202611120005 antes de sembrar preguntas: ${deleteError.message}`,
-      );
-    }
-
-    const now = new Date().toISOString();
-    const rows = questions.map((question, index) => ({
-      group_id: group.id,
-      question,
-      position: index,
-      is_active: true,
-      updated_at: now,
-    }));
-    const { error: insertError } = await service
-      .from("group_question_suggestions")
-      .insert(rows);
-    if (insertError) {
-      throw new Error(`No se pudieron sembrar las preguntas de ${slug}: ${insertError.message}`);
-    }
-    log(`${group.name}: preguntas sembradas.`);
+    const count = await seedQuestionSuggestions(service, group, questions);
+    log(`${group.name}: ${count} preguntas sembradas.`);
   }
 }
 

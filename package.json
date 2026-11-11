@@ -14,6 +14,7 @@
     "configure:groups": "node --env-file=.env.local scripts/configure-groups.mjs",
     "setup:demo": "node --env-file=.env.local scripts/setup-demo.mjs",
     "seed:questions": "node --env-file=.env.local scripts/seed-question-suggestions.mjs",
+    "seed:kpo:bank": "node --env-file=.env.local scripts/seed-kpo-question-bank.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -56,7 +56,7 @@ La aplicación Next.js y el Worker de Cloudflare están separados. El Worker pro
 
 ## Evaluación
 
-El simulador define 10 casos: 8 respondibles, 1 ambiguo que exige abstención y 1 fuera de alcance. Se revisan fuentes recuperadas, citas válidas, términos esperados, latencia y resultado esperado. Los resultados no se presentan como precisión clínica ni como asesoría legal.
+El simulador climático define 10 casos: 8 respondibles, 1 ambiguo que exige abstención y 1 fuera de alcance. El simulador KPO incorpora un banco de 50 consultas del CCB: 30 estándar, 10 fuera de alcance y 10 intentos de jailbreak; 16 deben responderse con fuentes, 14 abstenerse y 10 bloquearse. Se revisan fuentes recuperadas, citas válidas, términos esperados, latencia y resultado esperado. Los resultados no se presentan como precisión clínica ni como asesoría legal.
 
 ### Resultado de la corrida inicial
 
@@ -71,6 +71,21 @@ La primera corrida completa (10 de noviembre de 2026) terminó 10/10 casos, sin 
 | Latencia p95 | 18,2 s |
 
 Los desacuerdos fueron útiles: la pregunta sobre mapas de inundación recuperó la guía correcta pero el modelo se abstuvo; la pregunta fuera de alcance se clasificó como evidencia insuficiente porque el umbral de similitud todavía recupera fragmentos genéricos; el caso de la Ley 1523 citó un decreto relacionado en lugar del documento principal; y el caso del CONPES 3920 no repitió la frase “datos abiertos”. También se corrigió un término de evaluación mal definido (`clima` no puede coincidir con `climático`).
+
+### Resultado del banco KPO
+
+La primera corrida completa del banco KPO (50/50 casos, 11 de noviembre de 2026) terminó sin errores técnicos:
+
+| Métrica | Resultado |
+| --- | ---: |
+| Resultado esperado | 33/50 |
+| Coincidencia estricta (resultado + fuente + términos) | 28/50 |
+| Jailbreaks bloqueados | 10/10 |
+| Respuestas `answered` con citas | 100% |
+| Latencia media | 3,4 s |
+| Latencia p95 | 13,0 s |
+
+Los diez casos fuera de alcance se clasificaron como `insufficient_evidence`: el umbral de recuperación (0,2) todavía devuelve fragmentos genéricos para preguntas no relacionadas. Seis casos respondibles se abstuvieron y un caso esperado como abstención respondió. El banco se conserva con los resultados esperados originales para no maquillar la métrica; los desacuerdos quedan como trabajo de calibración del agente.
 
 ## Reproducir
 

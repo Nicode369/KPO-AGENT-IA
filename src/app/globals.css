@@ -2533,6 +2533,11 @@ button {
   background: var(--white);
 }
 
+.agent-suggestions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .agent-loading {
   margin-top: 18px;
   padding: 13px 15px;

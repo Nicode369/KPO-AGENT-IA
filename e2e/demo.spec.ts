@@ -71,13 +71,59 @@ test.describe("public demo", () => {
       await expect(page.getByRole("link", { name: "Historial" })).toBeVisible();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       await expect(page.getByText("Preguntas sugeridas")).toBeVisible();
-      await expect(page.getByRole("button", { name: /100-000015/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Qué NIA aplica/ })).toBeVisible();
 
       await page.goto("/app/history");
       await expect(page).toHaveURL(/\/app\/history/);
       await expect(page.getByRole("heading", { name: "Historial compartido" })).toBeVisible();
       await expect(page.getByText(/No escribas datos personales/).first()).toBeVisible();
       await expect(page.getByText(/POT municipal/)).toHaveCount(0);
+    });
+
+    test("suggestions stay visible after an answer", async ({ page }) => {
+      test.setTimeout(60_000);
+
+      await page.route("**/api/agent/query", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            answer: "Respuesta de prueba con una fuente.",
+            abstained: false,
+            outcome: "answered",
+            outcomeReason: null,
+            sources: [
+              {
+                rank: 1,
+                chunk_id: "chunk-1",
+                document_id: "document-1",
+                version_id: "version-1",
+                version: 1,
+                title: "Documento de prueba",
+                page: 1,
+                section: null,
+                article: null,
+                numeral: null,
+                similarity: 0.9,
+                excerpt: "Extracto de prueba.",
+              },
+            ],
+            model: "test-model",
+            latencyMs: 120,
+            auditSaved: true,
+          }),
+        });
+      });
+
+      await page.goto("/login");
+      await page.getByRole("button", { name: "DEMO KPO" }).click();
+      await expect(page).toHaveURL(/\/app\?demo=1/, { timeout: 30_000 });
+
+      const suggestion = page.getByRole("button", { name: /Qué NIA aplica/ });
+      await suggestion.click();
+      await expect(page.getByText("Respuesta de prueba con una fuente.")).toBeVisible();
+      await expect(page.getByText("Preguntas sugeridas")).toBeVisible();
+      await expect(suggestion).toBeVisible();
     });
   });
 

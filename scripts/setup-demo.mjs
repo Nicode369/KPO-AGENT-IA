@@ -5,6 +5,8 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
+import { seedQuestionSuggestions } from "./lib/question-suggestions.mjs";
+
 const APPLY = process.argv.includes("--apply");
 const ROTATE = process.argv.includes("--rotate");
 const REPLACE = process.argv.includes("--replace");
@@ -723,36 +725,19 @@ async function deleteObsoleteDocuments(service, groupId, groupDocuments) {
   return obsolete;
 }
 
-async function seedQuestionSuggestions(service, groupId, slug) {
+async function seedGroupQuestions(service, group, slug) {
   const questions = questionSuggestions[slug];
   if (!Array.isArray(questions) || !questions.length) return;
 
-  const { error: deleteError } = await service
-    .from("group_question_suggestions")
-    .delete()
-    .eq("group_id", groupId);
-  if (deleteError) {
+  try {
+    const count = await seedQuestionSuggestions(service, group, questions);
+    log(`Preguntas sugeridas de ${slug}: ${count}.`);
+  } catch (error) {
     log(
       `Advertencia: no se sembraron preguntas de ${slug}. ` +
-        `Aplica la migración 202611120005: ${deleteError.message}`,
+        `Aplica la migración 202611120005 si falta: ${error instanceof Error ? error.message : error}`,
     );
-    return;
   }
-
-  const now = new Date().toISOString();
-  const rows = questions.map((question, index) => ({
-    group_id: groupId,
-    question,
-    position: index,
-    is_active: true,
-    updated_at: now,
-  }));
-  const { error } = await service.from("group_question_suggestions").insert(rows);
-  if (error) {
-    log(`Advertencia: no se pudieron sembrar preguntas de ${slug}: ${error.message}`);
-    return;
-  }
-  log(`Preguntas sugeridas de ${slug}: ${questions.length}.`);
 }
 
 async function ensureSimulatorCases(service, groupId) {
@@ -1002,8 +987,8 @@ async function main() {
   }
 
   await ensureSimulatorCases(service, groupId);
-  await seedQuestionSuggestions(service, groupId, GROUP.slug);
-  await seedQuestionSuggestions(service, kpoGroup.id, KPO_GROUP_SLUG);
+  await seedGroupQuestions(service, group, GROUP.slug);
+  await seedGroupQuestions(service, kpoGroup, KPO_GROUP_SLUG);
 
   console.log("\nCuentas demo:");
   for (const user of saved.payload.users) {

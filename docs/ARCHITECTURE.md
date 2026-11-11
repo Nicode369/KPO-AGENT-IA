@@ -143,7 +143,7 @@ sequenceDiagram
 
 ### 4.1 Demo pública
 
-La landing, el login y `/caso-de-estudio` exponen dos botones que ejecutan la server action `startDemo` con la variante `kpo` o `clima`. La acción cierra cualquier sesión, inicia sesión con la cuenta configurada (`DEMO_KPO_*` o `DEMO_CLIMA_*`), valida perfil, grupo y membresía, registra `auth_demo_started` con la variante y el grupo, y redirige a `/app?demo=1`. El modo demo se deriva del correo del perfil, nunca de la URL; la sesión bloquea administración, comparte el historial dentro de la misma demo, filtra consultas por grupo y aplica `DEMO_RATE_LIMIT_PER_MINUTE` (60 por defecto). Cada variante ajusta el banner, las sugerencias y el grupo activo. La página `/caso-de-estudio` presenta el corpus climático y `/caso-de-estudio/kpo` el corpus de auditoría y cumplimiento, sin requerir sesión. El panel de preguntas se siembra en `group_question_suggestions` (migración 13) y se lee por grupo; si la tabla aún no está aplicada, la UI usa el seed estático de `data/question-suggestions.json`.
+La landing, el login y `/caso-de-estudio` exponen dos botones que ejecutan la server action `startDemo` con la variante `kpo` o `clima`. La acción cierra cualquier sesión, inicia sesión con la cuenta configurada (`DEMO_KPO_*` o `DEMO_CLIMA_*`), valida perfil, grupo y membresía, registra `auth_demo_started` con la variante y el grupo, y redirige a `/app?demo=1`. El modo demo se deriva del correo del perfil, nunca de la URL; la sesión bloquea administración, comparte el historial dentro de la misma demo, filtra consultas por grupo y aplica `DEMO_RATE_LIMIT_PER_MINUTE` (60 por defecto). Cada variante ajusta el banner, las sugerencias y el grupo activo. La página `/caso-de-estudio` presenta el corpus climático y `/caso-de-estudio/kpo` el corpus de auditoría y cumplimiento, sin requerir sesión. El panel de preguntas se siembra en `group_question_suggestions` (migración 13) y se lee por grupo; si la tabla no está disponible, la UI usa el seed estático de `data/question-suggestions.json`. El simulador KPO carga 50 casos desde `data/kpo-question-bank.json` con `npm run seed:kpo:bank -- --apply`.
 
 ## 5. Flujo documental
 
@@ -478,7 +478,7 @@ Las APIs devuelven JSON con `error.message` y códigos HTTP coherentes:
 ### Riesgos pendientes
 
 - Fase 6: migraciones 9, 10 y 11 aplicadas; la cadena verifica correctamente.
-- Fase 7: migración 12 (`simulator.sql`) aplicada; el simulador usa documentos publicados propios y comunes del grupo.
+- Fase 7: migración 12 (`simulator.sql`) aplicada; el simulador usa documentos publicados propios y comunes del grupo y admite lotes de hasta 50 casos.
 - Rate limit no probado con carga concurrente.
 - OCR de DOCX con imágenes embebidas no implementado.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.

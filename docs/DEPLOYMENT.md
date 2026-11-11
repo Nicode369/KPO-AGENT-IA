@@ -76,7 +76,7 @@ Aplicar en orden:
 202611120005_group_question_suggestions.sql
 ```
 
-La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. La migración 12 crea `simulator_cases`, `simulator_runs` y `simulator_results` con RLS por grupo. La migración 13 crea `group_question_suggestions` con lectura por grupo y escritura solo para `service_role`. Después de aplicarla, ejecuta `npm run seed:questions -- --apply`. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
+La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. La migración 12 crea `simulator_cases`, `simulator_runs` y `simulator_results` con RLS por grupo. La migración 13 crea `group_question_suggestions` con lectura por grupo y escritura solo para `service_role`. Después de aplicarla, ejecuta `npm run seed:questions -- --apply` y `npm run seed:kpo:bank -- --apply`. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
 
 Con CLI:
 
@@ -301,7 +301,7 @@ O desplegar la versión anterior del código.
 
 ## 9. Limitaciones del despliegue provisional
 
-- Fases 6 y 7 implementadas; migraciones 9–12 aplicadas y cadena verificada. La migración 13 queda pendiente de aplicar para persistir el panel de preguntas. Falta completar el despliegue y los smoke tests de producción.
+- Fases 6 y 7 implementadas; migraciones 9–13 aplicadas y cadena verificada. El panel de preguntas y el banco KPO de 50 casos ya están sembrados. Falta completar el despliegue y los smoke tests de producción.
 - App y Worker desplegados; faltan backups, monitoreo y smoke tests completos de producción.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.

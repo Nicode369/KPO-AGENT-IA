@@ -11,7 +11,7 @@ import type { SimulatorExpectedOutcome, SimulatorResult } from "@/lib/simulator/
 
 export const maxDuration = 60;
 
-const MAX_CASES_PER_RUN = 25;
+const MAX_CASES_PER_RUN = 50;
 
 type RunBody =
   | { action: "start"; groupId: string; caseIds: string[] }

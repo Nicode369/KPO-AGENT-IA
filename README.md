@@ -57,7 +57,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 4 | Gestión documental, OCR, publicación y versionado | ✅ Completada en local |
 | 5 | Agente RAG, citas, abstención, seguridad e historial | ✅ Completada en local |
 | 6 | Auditoría y trazabilidad ampliada | ✅ Completada en local: `audit_events` append-only con cadena SHA-256, eventos de auth/admin/ciclo documental, visor `/admin/audit/events`, verificador, reportes y exportación CSV protegida. Migraciones 9, 10 y 11 aplicadas y verificadas |
-| 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
+| 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada; KPO tiene 50 casos del banco CCB |
 | 8 | Integración y despliegue | ✅ App en Vercel y Worker desplegados; pendientes smoke tests de Auth/redirects, backups y monitoreo |
 
 El repositorio incluye una validación con **38 documentos y 4.574 fragmentos**: 15 en KPO y 23 en la demo de riesgo climático y datos abiertos, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el corpus demo se carga con `npm run setup:demo -- --apply`.
@@ -307,9 +307,12 @@ npm run setup:demo -- --apply --skip-documents
 
 # Sembrar o actualizar el panel de preguntas sugeridas
 npm run seed:questions -- --apply
+
+# Cargar o actualizar el banco de 50 consultas KPO en el simulador
+npm run seed:kpo:bank -- --apply
 ```
 
-El script asegura la cuenta `demo.kpo@example.com` en el grupo `kpo`, las cuentas de clima en `riesgo-climatico` y siembra las preguntas sugeridas si la migración 13 está aplicada. Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git. Para corpus grandes, el Worker gratuito puede superar su límite de CPU; en ese caso levanta `npm run dev` en `workers/kpo-ingest` y ejecuta `DEMO_WORKER_URL=http://localhost:8787 npm run setup:demo -- --apply --replace`.
+El script asegura la cuenta `demo.kpo@example.com` en el grupo `kpo`, las cuentas de clima en `riesgo-climatico` y siembra las preguntas sugeridas. El banco KPO de 50 consultas se carga por separado con `npm run seed:kpo:bank -- --apply`; es idempotente y solo reemplaza casos con prefijo `KPO CCB #`. Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git. Para corpus grandes, el Worker gratuito puede superar su límite de CPU; en ese caso levanta `npm run dev` en `workers/kpo-ingest` y ejecuta `DEMO_WORKER_URL=http://localhost:8787 npm run setup:demo -- --apply --replace`.
 
 ### 7. Confirmación de correo
 
@@ -381,7 +384,7 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | 11 | `202611120003_agent_out_of_scope.sql` | Añade el resultado `out_of_scope` y migra consultas sin fuentes relevantes |
 | 12 | `202611120004_simulator.sql` | Casos, ejecuciones y resultados del simulador con RLS por grupo |
 
-Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el desarrollo; la 13 añade `group_question_suggestions` y debe aplicarse antes de `npm run seed:questions -- --apply`. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra, la 11 habilitó `out_of_scope` y la 12 creó las tablas del simulador. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
+Las migraciones 1–13 están aplicadas en el proyecto remoto usado durante el desarrollo. La 13 añade `group_question_suggestions`, ya sembrada con las preguntas de KPO y clima. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra, la 11 habilitó `out_of_scope` y la 12 creó las tablas del simulador. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
 
 ## Rutas de la aplicación
 
