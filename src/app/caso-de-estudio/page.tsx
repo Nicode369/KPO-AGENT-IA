@@ -109,6 +109,9 @@ export default function CaseStudyPage() {
               <a className="button button-secondary" href="#fuentes">
                 Ver el corpus
               </a>
+              <Link className="button button-secondary" href="/caso-de-estudio/kpo">
+                Ver caso KPO
+              </Link>
             </div>
             <p className="case-disclaimer">
               {DEMO_CLIENT} es un cliente ficticio. El corpus, la arquitectura y las

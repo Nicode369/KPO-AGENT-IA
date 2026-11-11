@@ -228,8 +228,10 @@ export default function KpoCaseStudyPage() {
                 <span className="case-layer-icon">
                   <Icon size={20} />
                 </span>
-                <h3>{title}</h3>
-                <p>{copy}</p>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{copy}</p>
+                </div>
               </article>
             ))}
           </div>
