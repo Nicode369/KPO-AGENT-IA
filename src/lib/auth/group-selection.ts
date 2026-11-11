@@ -1,6 +1,7 @@
 export type GroupOption = {
   id: string;
   name: string;
+  slug?: string;
 };
 
 export function selectActiveGroup(

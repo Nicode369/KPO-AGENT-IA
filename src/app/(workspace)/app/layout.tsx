@@ -21,7 +21,6 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
     <WorkspaceShell
       showAdmin={showAdmin}
       showSimulator={showSimulator}
-      showHistory={!demoVariant}
       demoVariant={demoVariant}
     >
       {children}

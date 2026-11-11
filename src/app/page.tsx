@@ -15,8 +15,8 @@ import {
 } from "@/components/icons";
 
 const corpus = {
-  documents: 39,
-  chunks: 4_671,
+  documents: 38,
+  chunks: 4_574,
   published: "10 nov 2026",
 };
 
@@ -26,12 +26,6 @@ const collections = [
     description: "Circulares, guías, marco contable y procedimientos de auditoría.",
     detail: "15 documentos",
     icon: DocumentIcon,
-  },
-  {
-    title: "BPO",
-    description: "Externalización de servicios de TIC y Business Process Outsourcing.",
-    detail: "1 documento",
-    icon: LibraryIcon,
   },
   {
     title: "Riesgo climático y datos abiertos",
@@ -180,7 +174,8 @@ export default function Home() {
             <a href="#capacidades">Capacidades</a>
             <a href="#como-funciona">Cómo funciona</a>
             <a href="#seguridad">Seguridad</a>
-            <Link href="/caso-de-estudio">Caso de estudio</Link>
+            <Link href="/caso-de-estudio">Caso CLIMA</Link>
+            <Link href="/caso-de-estudio/kpo">Caso KPO</Link>
           </nav>
           <div className="site-actions">
             <Link className="button button-secondary" href="/login">Acceder</Link>
@@ -200,7 +195,10 @@ export default function Home() {
             <div className="hero-actions">
               <DemoButtons />
               <Link className="text-link hero-case-link" href="/caso-de-estudio">
-                Leer caso de estudio
+                Leer caso CLIMA
+              </Link>
+              <Link className="text-link hero-case-link" href="/caso-de-estudio/kpo">
+                Leer caso KPO
               </Link>
             </div>
             <p className="hero-meta">
@@ -376,10 +374,10 @@ export default function Home() {
                 <h3>Una nota sobre el corpus</h3>
               </div>
               <p>
-                El corpus publicado contiene {corpus.documents} documentos: 15 de KPO,
-                1 de BPO y 23 de la demo de riesgo climático y datos abiertos. El índice de
-                metadatos y los ejercicios del Bootcamp quedan fuera de la búsqueda porque
-                no son fuentes normativas.
+                El corpus publicado contiene {corpus.documents} documentos: 15 de KPO y
+                23 de la demo de riesgo climático y datos abiertos. El índice de metadatos
+                y los ejercicios del Bootcamp quedan fuera de la búsqueda porque no son
+                fuentes normativas.
               </p>
             </aside>
           </div>

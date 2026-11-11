@@ -6,6 +6,7 @@ import { AgentConsole } from "@/components/agent-console";
 import { roleLabel } from "@/lib/admin/data";
 import { demoVariantForEmail } from "@/lib/auth/demo";
 import { demoCopy } from "@/lib/demo/variants";
+import { loadQuestionSuggestions } from "@/lib/demo/question-suggestions";
 import { getSuperadminGroupContext } from "@/lib/auth/group-context";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 
@@ -33,15 +34,15 @@ export default async function AppHomePage({
       : []
     : memberships.map((membership) => membership.group_id);
 
-  let groups: { id: string; name: string }[] = [];
+  let groups: { id: string; name: string; slug?: string }[] = [];
   if (profile.is_superadmin) {
     groups = groupContext?.groups ?? [];
   } else if (groupIds.length) {
     const { data } = await supabase
       .from("groups")
-      .select("id, name")
+      .select("id, name, slug")
       .in("id", groupIds);
-    groups = (data ?? []) as { id: string; name: string }[];
+    groups = (data ?? []) as { id: string; name: string; slug?: string }[];
   }
 
   const groupNames = new Map(groups.map((group) => [group.id, group.name]));
@@ -49,6 +50,12 @@ export default async function AppHomePage({
     profile.is_superadmin ||
     memberships.some((membership) => membership.role === "group_admin");
   const demo = demoCopy(demoVariantForEmail(profile.email));
+  const suggestionTargets = profile.is_superadmin
+    ? activeGroup
+      ? [activeGroup]
+      : []
+    : groups;
+  const suggestionGroups = await loadQuestionSuggestions(supabase, suggestionTargets);
 
   return (
     <main className="signed-in-content">
@@ -142,7 +149,7 @@ export default async function AppHomePage({
       </section>
 
       <AgentConsole
-        suggestions={demo?.suggestions}
+        suggestionGroups={suggestionGroups}
         intro={demo?.intro}
       />
 

@@ -50,7 +50,7 @@ Verificar además:
 - `.env.local` y `.dev.vars` no están versionados.
 - No hay claves, JWT ni correos reales en Git.
 - `npm run build` termina sin errores.
-- Las migraciones 1–12 están aplicadas en Supabase, incluida la 12 (`simulator.sql`).
+- Las migraciones 1–12 están aplicadas en Supabase; la 13 (`group_question_suggestions`) debe aplicarse antes de sembrar el panel de preguntas.
 - Los buckets `documents-original` y `documents-processed` son privados.
 - El corpus local no se sube al repositorio.
 
@@ -73,9 +73,10 @@ Aplicar en orden:
 202611120002_audit_events_immutable_refs.sql
 202611120003_agent_out_of_scope.sql
 202611120004_simulator.sql
+202611120005_group_question_suggestions.sql
 ```
 
-La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. La migración 12 crea `simulator_cases`, `simulator_runs` y `simulator_results` con RLS por grupo. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
+La migración 9 crea `audit_events`, `append_audit_event`, `verify_audit_chain` y los disparadores de auditoría. Es obligatoria para `/admin/audit/events`, `/admin/reports` y la exportación CSV. La migración 10 elimina las FKs mutables de `audit_events` y repara eventos afectados. La migración 11 amplía los resultados del agente con `out_of_scope`. La migración 12 crea `simulator_cases`, `simulator_runs` y `simulator_results` con RLS por grupo. La migración 13 crea `group_question_suggestions` con lectura por grupo y escritura solo para `service_role`. Después de aplicarla, ejecuta `npm run seed:questions -- --apply`. Verifica en cada entorno con `select * from public.verify_audit_chain(null);`.
 
 Con CLI:
 
@@ -300,13 +301,13 @@ O desplegar la versión anterior del código.
 
 ## 9. Limitaciones del despliegue provisional
 
-- Fases 6 y 7 implementadas; migraciones 9–12 aplicadas y cadena verificada. Falta completar el despliegue y los smoke tests de producción.
+- Fases 6 y 7 implementadas; migraciones 9–12 aplicadas y cadena verificada. La migración 13 queda pendiente de aplicar para persistir el panel de preguntas. Falta completar el despliegue y los smoke tests de producción.
 - App y Worker desplegados; faltan backups, monitoreo y smoke tests completos de producción.
 - OCR síncrono dentro de `maxDuration = 60`.
 - Proxy de Vercel con límite de cuerpo (~4.5 MB); el corpus actual está por debajo.
 - Sin SMTP propio; confirmación y recuperación por correo limitadas.
 - Rate limit no probado con carga real; la demo pública usa 60 consultas/minuto.
-- El corpus de 39 documentos y 4.671 fragmentos no se versiona: KPO vive en `../base_drive/`, BPO se obtiene con `npm run configure:groups` y la demo con `npm run setup:demo -- --apply --replace`.
+- El corpus de 38 documentos y 4.574 fragmentos no se versiona: KPO vive en `../base_drive/` y la demo con `npm run setup:demo -- --apply --replace`.
 
 ## 10. Checklist final
 

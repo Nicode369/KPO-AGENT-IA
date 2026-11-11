@@ -19,6 +19,9 @@ const USER_AGENT =
 const manifest = JSON.parse(
   await readFile(join(ROOT, "data/demo-corpus.json"), "utf8"),
 );
+const questionSuggestions = JSON.parse(
+  await readFile(join(ROOT, "data/question-suggestions.json"), "utf8"),
+);
 
 const GROUP = {
   name: manifest.group.name,
@@ -720,6 +723,38 @@ async function deleteObsoleteDocuments(service, groupId, groupDocuments) {
   return obsolete;
 }
 
+async function seedQuestionSuggestions(service, groupId, slug) {
+  const questions = questionSuggestions[slug];
+  if (!Array.isArray(questions) || !questions.length) return;
+
+  const { error: deleteError } = await service
+    .from("group_question_suggestions")
+    .delete()
+    .eq("group_id", groupId);
+  if (deleteError) {
+    log(
+      `Advertencia: no se sembraron preguntas de ${slug}. ` +
+        `Aplica la migración 202611120005: ${deleteError.message}`,
+    );
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const rows = questions.map((question, index) => ({
+    group_id: groupId,
+    question,
+    position: index,
+    is_active: true,
+    updated_at: now,
+  }));
+  const { error } = await service.from("group_question_suggestions").insert(rows);
+  if (error) {
+    log(`Advertencia: no se pudieron sembrar preguntas de ${slug}: ${error.message}`);
+    return;
+  }
+  log(`Preguntas sugeridas de ${slug}: ${questions.length}.`);
+}
+
 async function ensureSimulatorCases(service, groupId) {
   const cases = Array.isArray(manifest.evaluationCases) ? manifest.evaluationCases : [];
   if (!cases.length) return;
@@ -967,6 +1002,8 @@ async function main() {
   }
 
   await ensureSimulatorCases(service, groupId);
+  await seedQuestionSuggestions(service, groupId, GROUP.slug);
+  await seedQuestionSuggestions(service, kpoGroup.id, KPO_GROUP_SLUG);
 
   console.log("\nCuentas demo:");
   for (const user of saved.payload.users) {

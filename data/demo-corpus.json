@@ -2,8 +2,7 @@
   "group": {
     "name": "Riesgo climático y datos abiertos",
     "slug": "riesgo-climatico",
-    "reuseGroupId": "4f6f057e-b5b4-4b8e-b3fb-e48382b9d40c",
-    "replaceSlug": "compras-publicas"
+    "reuseGroupId": "4f6f057e-b5b4-4b8e-b3fb-e48382b9d40c"
   },
   "users": [
     {

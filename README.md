@@ -60,7 +60,7 @@ El principio central es que el agente **no responde con conocimiento general**: 
 | 7 | Simulador de pruebas | ✅ Implementada: casos esperados, ejecución por lotes contra el agente real, métricas de acierto/citas/términos/latencia y aislamiento del historial. Migración 12 aplicada |
 | 8 | Integración y despliegue | ✅ App en Vercel y Worker desplegados; pendientes smoke tests de Auth/redirects, backups y monitoreo |
 
-El repositorio incluye una validación con **39 documentos y 4.671 fragmentos**: 15 en KPO, 1 en BPO y 23 en la demo de riesgo climático y datos abiertos, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el PDF de BPO se obtiene con `npm run configure:groups` y el corpus demo con `npm run setup:demo -- --apply`.
+El repositorio incluye una validación con **38 documentos y 4.574 fragmentos**: 15 en KPO y 23 en la demo de riesgo climático y datos abiertos, todos publicados como `restricted`. El corpus KPO no se versiona: vive fuera del repositorio, en `../base_drive/`, y se ignora mediante `.gitignore`; el corpus demo se carga con `npm run setup:demo -- --apply`.
 
 ## Capacidades
 
@@ -193,8 +193,9 @@ Los diagramas de secuencia, el modelo entidad-relación completo y la topología
 │   └── config.toml
 ├── workers/kpo-ingest/             # Worker de ingesta, OCR y modelos
 ├── scripts/ingest-base-drive.mjs   # ingesta masiva local
-├── scripts/configure-groups.mjs    # reconfiguración KPO/BPO, sin A/B
+├── scripts/configure-groups.mjs    # reconfiguración KPO, sin A/B
 ├── scripts/setup-demo.mjs          # grupos, cuentas demo KPO/clima y corpus climático
+├── scripts/seed-question-suggestions.mjs # preguntas sugeridas por grupo
 ├── e2e/                            # Playwright
 ├── docs/                           # arquitectura, despliegue y memoria
 └── public/                         # activos estáticos
@@ -285,14 +286,14 @@ npm run ingest:base-drive
 
 El script usa `INGEST_EMAIL`, `INGEST_PASSWORD`, `INGEST_GROUP_ID`, `INGEST_GROUP_SLUG` y `BASE_DRIVE_DIR`. Requiere una cuenta `group_admin` del grupo destino. `base_drive/` está ignorado y no forma parte del repositorio.
 
-Para reconfigurar los grupos de validación (KPO con 15 documentos restringidos, BPO con el paper IESE OP-08-02 y sin grupos A/B), ejecuta primero el dry-run y luego aplica:
+Para reconfigurar el grupo de validación KPO (15 documentos restringidos y sin grupos A/B), ejecuta primero el dry-run y luego aplica:
 
 ```bash
 npm run configure:groups
 npm run configure:groups -- --apply
 ```
 
-El script requiere `SUPABASE_SERVICE_ROLE_KEY` para borrar los grupos/cuentas de prueba y `INGEST_WORKER_URL` accesible para ingestar el PDF de BPO. La cuenta `INGEST_EMAIL` debe ser superadministradora.
+El script requiere `SUPABASE_SERVICE_ROLE_KEY` para borrar los grupos/cuentas de prueba. La cuenta `INGEST_EMAIL` debe ser superadministradora.
 
 Para crear o actualizar las demos de portafolio (`DEMO KPO` y `DEMO CLIMA`), ejecuta:
 
@@ -303,9 +304,12 @@ npm run setup:demo -- --apply --replace --rotate  # rota contraseñas
 
 # Crear o verificar las cuentas demo sin reingestar documentos
 npm run setup:demo -- --apply --skip-documents
+
+# Sembrar o actualizar el panel de preguntas sugeridas
+npm run seed:questions -- --apply
 ```
 
-El script asegura la cuenta `demo.kpo@example.com` en el grupo `kpo` y las cuentas de clima en `riesgo-climatico`. Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git. Para corpus grandes, el Worker gratuito puede superar su límite de CPU; en ese caso levanta `npm run dev` en `workers/kpo-ingest` y ejecuta `DEMO_WORKER_URL=http://localhost:8787 npm run setup:demo -- --apply --replace`.
+El script asegura la cuenta `demo.kpo@example.com` en el grupo `kpo`, las cuentas de clima en `riesgo-climatico` y siembra las preguntas sugeridas si la migración 13 está aplicada. Las credenciales se guardan en `/tmp/opencode/demo-credentials-*.json` con permisos `600` y no deben confirmarse en Git. Para corpus grandes, el Worker gratuito puede superar su límite de CPU; en ese caso levanta `npm run dev` en `workers/kpo-ingest` y ejecuta `DEMO_WORKER_URL=http://localhost:8787 npm run setup:demo -- --apply --replace`.
 
 ### 7. Confirmación de correo
 
@@ -377,7 +381,7 @@ La configuración actual usa **Confirm email desactivado** para evitar el límit
 | 11 | `202611120003_agent_out_of_scope.sql` | Añade el resultado `out_of_scope` y migra consultas sin fuentes relevantes |
 | 12 | `202611120004_simulator.sql` | Casos, ejecuciones y resultados del simulador con RLS por grupo |
 
-Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el desarrollo. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra, la 11 habilitó `out_of_scope` y la 12 creó las tablas del simulador. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
+Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el desarrollo; la 13 añade `group_question_suggestions` y debe aplicarse antes de `npm run seed:questions -- --apply`. La migración 9 se verificó con `select * from public.verify_audit_chain(null);`, la 10 dejó la cadena íntegra, la 11 habilitó `out_of_scope` y la 12 creó las tablas del simulador. Verifica siempre el estado en el Dashboard antes de un despliegue nuevo.
 
 ## Rutas de la aplicación
 
@@ -385,9 +389,10 @@ Las migraciones 1–12 están aplicadas en el proyecto remoto usado durante el d
 | --- | --- | --- |
 | `/` | Público | Landing con acceso a las demos KPO y clima |
 | `/caso-de-estudio` | Público | Caso de estudio de riesgo climático y datos abiertos |
+| `/caso-de-estudio/kpo` | Público | Caso de estudio KPO de auditoría y cumplimiento |
 | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` | Público | Flujos de autenticación |
 | `/app` | Usuario activo | Dashboard, consola del agente y selector de grupo activo para superadmin |
-| `/app/history` | Usuario activo | Historial personal de consultas |
+| `/app/history` | Usuario activo | Historial personal; en demos es compartido y filtrado por grupo |
 | `/app/simulator` | Superadmin / `group_admin` / `supervisor` | Casos, ejecución y métricas del simulador |
 | `/admin` | Superadmin / `group_admin` | Resumen administrativo |
 | `/admin/groups` | Superadmin | Crear y listar grupos |
@@ -508,7 +513,7 @@ npm run dev
 npm run test:e2e
 ```
 
-Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/caso-de-estudio`, el auto-login de ambas demos con `DEMO_KPO_*` y `DEMO_CLIMA_*` (o `DEMO_ANALYST_*` como fallback), `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit`, `/admin/audit/events`, `/admin/reports`, la descarga CSV y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js. Los nuevos checks requieren `SUPABASE_SERVICE_ROLE_KEY` y las migraciones 9 y 10 aplicadas.
+Las pruebas E2E cargan `.env.local`, verifican `/login`, `/app`, `/app/history`, `/caso-de-estudio`, `/caso-de-estudio/kpo`, el auto-login de ambas demos con `DEMO_KPO_*` y `DEMO_CLIMA_*` (o `DEMO_ANALYST_*` como fallback), el historial compartido de las demos, `/admin`, `/admin/invitations`, `/admin/documents`, `/admin/users`, `/admin/groups`, `/admin/audit`, `/admin/audit/events`, `/admin/reports`, la descarga CSV y `/admin/security`, y fallan si aparece un overlay de ruta bloqueada o un valor inestable de Next.js. Los nuevos checks requieren `SUPABASE_SERVICE_ROLE_KEY` y las migraciones 9, 10 y 13 aplicadas.
 
 ## Despliegue
 
@@ -540,7 +545,7 @@ Resumen:
 - **Rate limit no probado bajo carga real.**
 - **OCR de imágenes embebidas en DOCX no implementado.**
 - **Supervisor sin panel de seguimiento dedicado:** puede ejecutar el simulador y consultar sus resultados, pero no gestiona casos ni miembros.
-- **Datos de validación:** los 39 documentos y 4.671 fragmentos no forman parte del repo; KPO vive en `../base_drive/`, BPO se descarga desde el IESE y la demo usa 23 PDFs públicos de entidades colombianas.
+- **Datos de validación:** los 38 documentos y 4.574 fragmentos no forman parte del repo; KPO vive en `../base_drive/` y la demo usa 23 PDFs públicos de entidades colombianas.
 - **Integración de proveedor de IA:** la capa está separada en el Worker, pero cambiar de proveedor requiere adaptar `workers/kpo-ingest/src`.
 
 ## Fases pendientes

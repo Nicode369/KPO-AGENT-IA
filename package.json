@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "configure:groups": "node --env-file=.env.local scripts/configure-groups.mjs",
-    "setup:demo": "node --env-file=.env.local scripts/setup-demo.mjs"
+    "setup:demo": "node --env-file=.env.local scripts/setup-demo.mjs",
+    "seed:questions": "node --env-file=.env.local scripts/seed-question-suggestions.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

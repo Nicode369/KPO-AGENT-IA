@@ -85,6 +85,7 @@ export default function CaseStudyPage() {
             <a href="#arquitectura">Arquitectura</a>
             <a href="#fuentes">Fuentes</a>
             <a href="#resultados">Resultados</a>
+            <Link href="/caso-de-estudio/kpo">Caso KPO</Link>
           </nav>
           <div className="site-actions">
             <DemoButtons className="demo-actions-header" />
@@ -350,8 +351,8 @@ export default function CaseStudyPage() {
               <strong>23 / 23</strong>
               <span>documentos validados y publicados</span>
               <p>
-                La biblioteca total queda en 39 documentos: 15 de KPO, 1 de BPO y 23 de
-                riesgo climático y datos abiertos.
+                La biblioteca total queda en 38 documentos: 15 de KPO y 23 de riesgo
+                climático y datos abiertos.
               </p>
             </div>
             <div className="case-result-list">
@@ -403,6 +404,10 @@ export default function CaseStudyPage() {
             </p>
           </div>
           <DemoButtons />
+          <p className="case-footnote">
+            ¿Buscas el caso de auditoría y cumplimiento?{" "}
+            <Link href="/caso-de-estudio/kpo">Abrir caso KPO</Link>.
+          </p>
         </section>
 
         <footer className="site-footer">

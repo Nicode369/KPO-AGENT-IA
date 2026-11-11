@@ -35,7 +35,7 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByLabel("Grupo activo")).toBeVisible();
     const groupOptions = page.getByLabel("Grupo activo").locator("option");
     await expect(groupOptions.filter({ hasText: "KPO" })).toHaveCount(1);
-    await expect(groupOptions.filter({ hasText: "BPO" })).toHaveCount(1);
+    await expect(groupOptions.filter({ hasText: "BPO" })).toHaveCount(0);
     await expect(groupOptions.filter({ hasText: "grupo A" })).toHaveCount(0);
     await expect(groupOptions.filter({ hasText: "grupo B" })).toHaveCount(0);
     await expectNoNextRuntimeError(page);

@@ -4,14 +4,14 @@
 
 La demo pública de RAG Agent AI responde preguntas sobre riesgo climático, planeación territorial y datos abiertos usando **23 PDFs públicos** de entidades colombianas. El caso se presenta con un cliente ficticio, **Alcaldía de Villa del Río**, para mostrar cómo un gobierno local podría convertir un corpus normativo disperso en respuestas trazables.
 
-- Página pública: `/caso-de-estudio`
-- Entrada: botón **DEMO CLIMA** (y **DEMO KPO**) en `/`, `/login` y `/caso-de-estudio`
+- Página pública: `/caso-de-estudio` (CLIMA) y `/caso-de-estudio/kpo` (KPO)
+- Entrada: botón **DEMO CLIMA** y **DEMO KPO** en `/`, `/login`, `/caso-de-estudio` y `/caso-de-estudio/kpo`
 - Cuenta compartida clima: `demo.analista@example.com`
 - Cuenta compartida KPO: `demo.kpo@example.com` (grupo `kpo`)
 - Grupo: `riesgo-climatico` (`restricted`)
 - Límite: 60 consultas por minuto por cuenta demo
 - Corpus: 23 documentos, 5 categorías, 1.393 páginas, ~65 MB
-- Biblioteca total: 39 documentos publicados y 4.671 fragmentos
+- Biblioteca total: 38 documentos publicados y 4.574 fragmentos (15 KPO + 23 CLIMA)
 
 ## Corpus
 
@@ -30,9 +30,9 @@ Los PDFs se validan con firma `%PDF-`, tamaño máximo, páginas, capa de texto 
 1. El visitante llega a `/`, `/login` o `/caso-de-estudio` y pulsa **DEMO CLIMA** o **DEMO KPO**.
 2. `startDemo` cierra cualquier sesión previa, inicia sesión con la cuenta de la variante y valida perfil, grupo y membresía.
 3. La sesión se marca como demo por el correo del perfil, no por un parámetro de URL.
-4. `/app` muestra el banner de demo, oculta Historial y limita las consultas a 60/minuto.
+4. `/app` muestra el banner de demo, un panel de preguntas por grupo y un historial compartido filtrado por grupo; limita las consultas a 60/minuto.
 5. Cada respuesta conserva fuentes numeradas, citas versionadas, abstención sin evidencia, RLS y auditoría.
-6. `/caso-de-estudio` explica el reto, la arquitectura, el corpus, los controles y los resultados.
+6. `/caso-de-estudio` explica el caso CLIMA y `/caso-de-estudio/kpo` el caso de auditoría y cumplimiento.
 
 ## Arquitectura
 
@@ -48,7 +48,7 @@ La aplicación Next.js y el Worker de Cloudflare están separados. El Worker pro
 
 - Contraseña demo solo en el servidor.
 - Modo demo derivado del perfil, no de `?demo=1`.
-- Historial y administración bloqueados en el servidor para la cuenta demo.
+- Historial compartido por demo, filtrado por grupo y sin `blocked`/`rejected`/`error`; administración bloqueada en el servidor.
 - RLS por grupo y funciones `security definer` para operaciones controladas.
 - Auditoría encadenada por hash.
 - Filtro de prompt injection, extracción masiva y acciones destructivas.

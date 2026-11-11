@@ -1,15 +1,7 @@
 #!/usr/bin/env node
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
 const APPLY = process.argv.includes("--apply");
-const PDF_URL = "https://www.iese.edu/media/research/pdfs/OP-08-02.pdf";
-const PDF_FILENAME = "IESE_OP-08-02.pdf";
-const PDF_TITLE =
-  "La externalización de los servicios de TIC y el Business Process Outsourcing (BPO) — IESE OP-08-02";
-const TEMP_DIR = "/tmp/opencode";
-const MAX_PDF_BYTES = 26214400;
 const LEGACY_SLUGS = new Set(["a", "b", "grupo-a", "grupo-b"]);
 const LEGACY_NAMES = new Set(["a", "b", "grupo a", "grupo b"]);
 
@@ -58,139 +50,10 @@ async function appendAudit(service, input) {
   }
 }
 
-async function inspectPdf() {
-  const response = await fetch(PDF_URL, { method: APPLY ? "GET" : "HEAD" });
-  if (!response.ok) {
-    throw new Error(`No se pudo descargar el PDF de BPO: HTTP ${response.status}`);
-  }
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.toLowerCase().includes("application/pdf")) {
-    throw new Error(`El recurso de BPO no es un PDF (${contentType || "sin content-type"}).`);
-  }
-
-  const contentLength = Number(response.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_PDF_BYTES) {
-    throw new Error("El PDF de BPO supera el límite de 25 MB.");
-  }
-
-  if (!APPLY) {
-    log(`PDF BPO verificado: ${contentLength || "tamaño desconocido"} bytes.`);
-    return null;
-  }
-
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length > MAX_PDF_BYTES) {
-    throw new Error("El PDF de BPO supera el límite de 25 MB.");
-  }
-
-  await mkdir(TEMP_DIR, { recursive: true });
-  const path = join(TEMP_DIR, PDF_FILENAME);
-  await writeFile(path, bytes);
-  log(`PDF BPO descargado en ${path} (${bytes.length} bytes).`);
-  return { bytes, path };
-}
-
-async function ingestPdf({ userClient, workerUrl, token, groupId }) {
-  const existing = await userClient
-    .from("documents")
-    .select("id, status, visibility")
-    .eq("group_id", groupId)
-    .eq("title", PDF_TITLE)
-    .maybeSingle();
-
-  if (existing.error) {
-    throw new Error(`No se pudo consultar el documento BPO: ${existing.error.message}`);
-  }
-
-  let document = existing.data;
-
-  if (!document) {
-    const pdf = await inspectPdf();
-    if (!pdf) return null;
-
-    const form = new FormData();
-    form.append("group_id", groupId);
-    form.append("document_type", "guia");
-    form.append("title", PDF_TITLE);
-    form.append("norm_number", "OP-08-02");
-    form.append("version_label", "2007-11");
-    form.append("file", new Blob([pdf.bytes], { type: "application/pdf" }), PDF_FILENAME);
-
-    log("Ingestando PDF BPO mediante el Worker...");
-    const response = await fetch(`${workerUrl}/ingest`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}` },
-      body: form,
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(
-        `La ingesta BPO falló: ${payload?.error?.message ?? `HTTP ${response.status}`}`,
-      );
-    }
-    if (payload?.processing?.state === "error") {
-      throw new Error(`Procesamiento BPO falló: ${payload.processing.message}`);
-    }
-    log(`PDF BPO ingestado (${payload?.processing?.chunk_count ?? 0} fragmentos).`);
-
-    const created = await userClient
-      .from("documents")
-      .select("id, status, visibility")
-      .eq("group_id", groupId)
-      .eq("title", PDF_TITLE)
-      .single();
-    if (created.error || !created.data) {
-      throw new Error(`No se encontró el documento BPO recién creado: ${created.error?.message ?? "sin datos"}`);
-    }
-    document = created.data;
-  } else {
-    log(`El documento BPO ya existe (${document.status}).`);
-  }
-
-  if (document.status === "error") {
-    throw new Error("El documento BPO está en estado de error.");
-  }
-
-  if (document.visibility !== "restricted") {
-    const { error } = await userClient.rpc("set_document_access", {
-      p_document_id: document.id,
-      p_visibility: "restricted",
-      p_group_ids: [],
-    });
-    if (error) throw new Error(`No se pudo restringir el documento BPO: ${error.message}`);
-  }
-
-  if (document.status === "pending_review") {
-    const { error } = await userClient.rpc("approve_document", {
-      p_document_id: document.id,
-      p_notes: "Documento base del grupo BPO.",
-    });
-    if (error) throw new Error(`No se pudo aprobar el documento BPO: ${error.message}`);
-    document = { ...document, status: "approved" };
-  }
-
-  if (document.status === "approved") {
-    const { error } = await userClient.rpc("publish_document", {
-      p_document_id: document.id,
-    });
-    if (error) throw new Error(`No se pudo publicar el documento BPO: ${error.message}`);
-    document = { ...document, status: "published" };
-  }
-
-  if (document.status !== "published") {
-    throw new Error(`El documento BPO quedó en estado ${document.status}.`);
-  }
-
-  log("Documento BPO publicado y restringido.");
-  return document.id;
-}
-
 async function main() {
   const supabaseUrl = required("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL");
   const anonKey = required("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
   const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
-  const workerUrl = required("INGEST_WORKER_URL").replace(/\/+$/, "");
   const email = required("INGEST_EMAIL");
   const password = required("INGEST_PASSWORD");
 
@@ -284,7 +147,6 @@ async function main() {
   const kpo = (groups ?? []).find((group) => normalize(group.slug) === "kpo");
   if (!kpo) throw new Error("No existe el grupo KPO (slug kpo).");
 
-  const bpo = (groups ?? []).find((group) => normalize(group.slug) === "bpo");
   const { data: kpoDocuments, error: kpoDocumentsError } = await service
     .from("documents")
     .select("id, title, status, visibility")
@@ -295,9 +157,8 @@ async function main() {
   log(`Documentos KPO: ${kpoDocuments?.length ?? 0}; se pasarán a restricted los que sigan en common.`);
 
   if (!APPLY) {
-    log(`Se eliminarían ${legacyGroups.length} grupos, ${testUsers.length} cuentas de prueba y se crearía/reutilizaría BPO.`);
+    log(`Se eliminarían ${legacyGroups.length} grupos y ${testUsers.length} cuentas de prueba.`);
     log(`Se actualizarían ${(kpoDocuments ?? []).filter((document) => document.visibility !== "restricted").length} documentos KPO.`);
-    await inspectPdf();
     log("Dry-run completado. Ejecuta con --apply para aplicar los cambios.");
     return;
   }
@@ -336,19 +197,6 @@ async function main() {
     log(`Cuenta eliminada: ${profile.email}.`);
   }
 
-  let bpoGroup = bpo;
-  if (!bpoGroup) {
-    const { data: created, error } = await userClient.rpc("create_group", {
-      p_name: "BPO",
-      p_slug: "bpo",
-    });
-    if (error) throw new Error(`No se pudo crear el grupo BPO: ${error.message}`);
-    bpoGroup = Array.isArray(created) ? created[0] : created;
-    log("Grupo BPO creado.");
-  } else {
-    log("Grupo BPO ya existe.");
-  }
-
   for (const document of kpoDocuments ?? []) {
     if (document.visibility === "restricted") continue;
     const { error } = await userClient.rpc("set_document_access", {
@@ -360,32 +208,15 @@ async function main() {
     log(`Documento KPO restringido: ${document.title}.`);
   }
 
-  await ingestPdf({
-    userClient,
-    workerUrl,
-    token: authData.session.access_token,
-    groupId: bpoGroup.id,
-  });
-
   const { count: kpoPublished } = await service
     .from("documents")
     .select("id", { head: true, count: "exact" })
     .eq("group_id", kpo.id)
     .eq("status", "published")
     .eq("visibility", "restricted");
-  const { count: bpoPublished } = await service
-    .from("documents")
-    .select("id", { head: true, count: "exact" })
-    .eq("group_id", bpoGroup.id)
-    .eq("status", "published")
-    .eq("visibility", "restricted");
-
-  log(`Verificación: KPO=${kpoPublished ?? 0} publicados/restricted; BPO=${bpoPublished ?? 0} publicados/restricted.`);
+  log(`Verificación: KPO=${kpoPublished ?? 0} publicados/restricted.`);
   if (kpoPublished !== 15) {
     console.warn(`[verify] Se esperaban 15 documentos KPO y hay ${kpoPublished ?? 0}.`);
-  }
-  if (bpoPublished !== 1) {
-    console.warn(`[verify] Se esperaba 1 documento BPO y hay ${bpoPublished ?? 0}.`);
   }
   log("Reconfiguración completada.");
 }

@@ -2487,10 +2487,8 @@ button {
 }
 
 .agent-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
+  display: grid;
+  gap: 12px;
   margin-top: 16px;
 }
 
@@ -2499,6 +2497,24 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.agent-suggestion-group {
+  display: grid;
+  gap: 7px;
+}
+
+.agent-suggestion-group > strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.agent-suggestion-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
 }
 
 .agent-suggestions button {

@@ -16,11 +16,17 @@ const DEFAULT_SUGGESTIONS = [
   "¿Qué plazos o vigencias mencionan los documentos publicados?",
 ];
 
+export type SuggestionGroup = {
+  id: string;
+  label: string;
+  questions: string[];
+};
+
 export function AgentConsole({
-  suggestions = DEFAULT_SUGGESTIONS,
+  suggestionGroups = [],
   intro = "La respuesta usa recuperación semántica sobre los fragmentos autorizados y cita cada fuente. Si la evidencia no alcanza, el asistente se abstiene.",
 }: {
-  suggestions?: string[];
+  suggestionGroups?: SuggestionGroup[];
   intro?: string;
 }) {
   const [question, setQuestion] = useState("");
@@ -111,18 +117,28 @@ export function AgentConsole({
 
       {state.status === "idle" ? (
         <div className="agent-suggestions">
-          <span>Sugerencias</span>
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => {
-                setQuestion(suggestion);
-                void ask(suggestion);
-              }}
-            >
-              {suggestion}
-            </button>
+          <span>Preguntas sugeridas</span>
+          {(suggestionGroups.length
+            ? suggestionGroups
+            : [{ id: "default", label: "", questions: DEFAULT_SUGGESTIONS }]
+          ).map((group) => (
+            <div className="agent-suggestion-group" key={group.id}>
+              {group.label ? <strong>{group.label}</strong> : null}
+              <div className="agent-suggestion-buttons">
+                {group.questions.map((suggestion) => (
+                  <button
+                    key={`${group.id}-${suggestion}`}
+                    type="button"
+                    onClick={() => {
+                      setQuestion(suggestion);
+                      void ask(suggestion);
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       ) : null}

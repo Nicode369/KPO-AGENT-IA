@@ -49,11 +49,16 @@ export function WorkspaceShell({
             <span className="demo-badge">{demo.label}</span>
             <p>
               Estás explorando {demo.library} con una cuenta compartida. El historial
-              y la administración no están disponibles.
+              es compartido y solo muestra respuestas de esta demo; la administración no
+              está disponible. No escribas datos personales.
             </p>
-            {demoVariant === "clima" ? (
-              <Link href="/caso-de-estudio">Ver caso de estudio</Link>
-            ) : null}
+            <Link
+              href={
+                demoVariant === "kpo" ? "/caso-de-estudio/kpo" : "/caso-de-estudio"
+              }
+            >
+              Ver caso de estudio
+            </Link>
           </div>
         </div>
       ) : null}

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { redirect } from "next/navigation";
 
 import { HistoryIcon } from "@/components/icons";
 import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
-import { isDemoEmail } from "@/lib/auth/demo";
+import { demoGroupSlug, demoVariantForEmail } from "@/lib/auth/demo";
+import { demoCopy } from "@/lib/demo/variants";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
 import { formatDateTime } from "@/lib/datetime";
 
@@ -35,10 +35,21 @@ type HistorySource = {
 
 export default async function HistoryPage() {
   await connection();
-  const { supabase, profile } = await requireWorkspaceUser();
-  if (isDemoEmail(profile.email)) redirect("/app?demo=1");
+  const { supabase, profile, memberships } = await requireWorkspaceUser();
+  const demoVariant = demoVariantForEmail(profile.email);
+  const demo = demoCopy(demoVariant);
 
-  const { data, error } = await supabase
+  let demoGroupId: string | null = null;
+  if (demoVariant) {
+    const { data: demoGroup } = await supabase
+      .from("groups")
+      .select("id")
+      .eq("slug", demoGroupSlug(demoVariant))
+      .maybeSingle();
+    demoGroupId = demoGroup?.id ?? memberships[0]?.group_id ?? null;
+  }
+
+  let request = supabase
     .from("agent_queries")
     .select(
       "id, question, answer, outcome, outcome_reason, abstained, model, prompt_version, latency_ms, source_count, grounding_score, created_at",
@@ -46,6 +57,14 @@ export default async function HistoryPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
+  if (demoVariant && demoGroupId) {
+    request = request
+      .contains("group_ids", [demoGroupId])
+      .in("outcome", ["answered", "insufficient_evidence", "out_of_scope"]);
+  }
+
+  const { data, error } =
+    demoVariant && !demoGroupId ? { data: [], error: null } : await request;
   const queries = (data ?? []) as HistoryQuery[];
   const sourcesByQuery = new Map<string, HistorySource[]>();
 
@@ -68,11 +87,12 @@ export default async function HistoryPage() {
     <main className="signed-in-content history-page">
       <div className="history-head">
         <div>
-          <p className="admin-eyebrow">Trazabilidad</p>
-          <h1>Historial de consultas</h1>
+          <p className="admin-eyebrow">{demo ? demo.label : "Trazabilidad"}</p>
+          <h1>{demo ? "Historial compartido" : "Historial de consultas"}</h1>
           <p className="workspace-lead">
-            Cada consulta registra su resultado, las fuentes recuperadas y el modelo
-            utilizado. El historial es personal y respeta el aislamiento entre grupos.
+            {demo
+              ? `Consultas realizadas por todas las personas que exploran ${demo.library}. Se ocultan solicitudes bloqueadas, rechazadas y errores. No escribas datos personales.`
+              : "Cada consulta registra su resultado, las fuentes recuperadas y el modelo utilizado. El historial es personal y respeta el aislamiento entre grupos."}
           </p>
         </div>
         <Link className="button button-secondary" href="/app">
@@ -95,7 +115,9 @@ export default async function HistoryPage() {
           <HistoryIcon size={28} />
           <h2>Todavía no hay consultas registradas</h2>
           <p>
-            Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes.
+            {demo
+              ? "Haz una pregunta en esta demo y aparecerá aquí para las próximas personas que la visiten."
+              : "Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes."}
           </p>
           <Link className="button button-secondary" href="/app">
             Ir al asistente

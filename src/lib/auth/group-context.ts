@@ -23,7 +23,7 @@ export async function getSuperadminGroupContext(
 
   const { data, error } = await supabase
     .from("groups")
-    .select("id, name")
+    .select("id, name, slug")
     .order("name", { ascending: true });
 
   if (error) {
