@@ -33,6 +33,11 @@ test.describe("authenticated workspace", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText("Grupos disponibles")).toBeVisible();
     await expect(page.getByLabel("Grupo activo")).toBeVisible();
+    const globalDocuments = page.locator(".workspace-status > div", {
+      hasText: "Documentos globales",
+    });
+    await expect(globalDocuments).toBeVisible();
+    await expect(globalDocuments.locator("strong")).toHaveText(/^\d+$/);
     const groupOptions = page.getByLabel("Grupo activo").locator("option");
     await expect(groupOptions.filter({ hasText: "KPO" })).toHaveCount(1);
     await expect(groupOptions.filter({ hasText: "BPO" })).toHaveCount(0);

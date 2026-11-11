@@ -2,7 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 
-import type { AgentQueryResponse, AgentSource } from "@/lib/agent/types";
+import { OUTCOME_TONES } from "@/lib/agent/labels";
+import type { AgentQueryResponse } from "@/lib/agent/types";
+
+import { RichAnswer } from "./rich-answer";
 
 type State =
   | { status: "idle" }
@@ -25,9 +28,11 @@ export type SuggestionGroup = {
 export function AgentConsole({
   suggestionGroups = [],
   intro = "La respuesta usa recuperación semántica sobre los fragmentos autorizados y cita cada fuente. Si la evidencia no alcanza, el asistente se abstiene.",
+  knowledgeBaseLabel,
 }: {
   suggestionGroups?: SuggestionGroup[];
   intro?: string;
+  knowledgeBaseLabel?: string;
 }) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<State>({ status: "idle" });
@@ -154,34 +159,54 @@ export function AgentConsole({
         </p>
       ) : null}
 
-      {state.status === "success" ? <Answer data={state.data} /> : null}
+      {state.status === "success" ? (
+        <Answer data={state.data} knowledgeBaseLabel={knowledgeBaseLabel} />
+      ) : null}
     </section>
   );
 }
 
-function Answer({ data }: { data: AgentQueryResponse }) {
-  const tag =
+function Answer({
+  data,
+  knowledgeBaseLabel,
+}: {
+  data: AgentQueryResponse;
+  knowledgeBaseLabel?: string;
+}) {
+  const label =
     data.outcome === "answered"
-      ? { className: "agent-tag", label: "Respuesta con fuentes" }
+      ? "Respuesta con fuentes"
       : data.outcome === "blocked"
-        ? { className: "agent-tag agent-tag-warn", label: "Solicitud bloqueada" }
+        ? "Solicitud bloqueada"
         : data.outcome === "rejected"
-          ? { className: "agent-tag agent-tag-warn", label: "Consulta rechazada" }
+          ? "Consulta rechazada"
           : data.outcome === "out_of_scope"
-            ? { className: "agent-tag agent-tag-warn", label: "Fuera de alcance" }
-            : { className: "agent-tag agent-tag-warn", label: "Sin evidencia suficiente" };
+            ? "Fuera de alcance"
+            : data.outcome === "error"
+              ? "Error"
+              : "Sin evidencia suficiente";
+  const tone = OUTCOME_TONES[data.outcome] ?? "outcome-tag-muted";
 
   return (
     <div className="agent-answer" aria-live="polite">
       <div className="agent-answer-head">
-        <span className={tag.className}>{tag.label}</span>
+        <div className="agent-answer-tags">
+          {knowledgeBaseLabel ? (
+            <span className="agent-base-tag">{knowledgeBaseLabel}</span>
+          ) : null}
+          <span className={`agent-tag ${tone}`}>{label}</span>
+        </div>
         <span className="agent-meta">
           {data.sources.length} fuente{data.sources.length === 1 ? "" : "s"} ·{" "}
           {Math.round(data.latencyMs / 100) / 10}s
         </span>
       </div>
 
-      <div className="agent-answer-text">{renderAnswer(data.answer, data.sources)}</div>
+      <RichAnswer
+        className="agent-answer-text"
+        answer={data.answer}
+        sources={data.sources}
+      />
 
       {data.sources.length ? (
         <div className="agent-sources">
@@ -218,33 +243,4 @@ function Answer({ data }: { data: AgentQueryResponse }) {
       ) : null}
     </div>
   );
-}
-
-function renderAnswer(answer: string, sources: AgentSource[]) {
-  const parts = answer.split(/(\[\d{1,2}\])/g);
-  return parts.map((part, index) => {
-    const match = part.match(/^\[(\d{1,2})\]$/);
-    if (!match) return <span key={index}>{part}</span>;
-
-    const rank = Number(match[1]);
-    const exists = sources.some((source) => source.rank === rank);
-    if (!exists) {
-      return (
-        <span key={index} className="agent-citation agent-citation-invalid">
-          [?]
-        </span>
-      );
-    }
-
-    return (
-      <a
-        key={index}
-        className="agent-citation"
-        href={`#agent-source-${rank}`}
-        aria-label={`Ir a la fuente ${rank}`}
-      >
-        [{rank}]
-      </a>
-    );
-  });
 }

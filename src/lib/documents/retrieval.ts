@@ -1,5 +1,31 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export type KnowledgeBaseDocumentCount =
+  | { ok: true; count: number }
+  | { ok: false };
+
+export async function getKnowledgeBaseDocumentCount(
+  supabase: SupabaseClient,
+  groupIds: string[],
+  options: { global?: boolean } = {},
+): Promise<KnowledgeBaseDocumentCount> {
+  if (!options.global && !groupIds.length) return { ok: true, count: 0 };
+
+  let query = supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+
+  if (!options.global) {
+    query = query.in("group_id", groupIds);
+  }
+
+  const { count, error } = await query;
+  if (error) return { ok: false };
+
+  return { ok: true, count: count ?? 0 };
+}
+
 export async function getPublishedDocumentIdsForGroup(
   supabase: SupabaseClient,
   groupId: string,

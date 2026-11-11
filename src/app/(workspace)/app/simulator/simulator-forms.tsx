@@ -549,7 +549,7 @@ export function SimulatorRunPanel({
                         <span
                           className={`admin-tag ${
                             OUTCOME_TONES[result.actual_outcome] ??
-                            "admin-tag-muted"
+                            "outcome-tag-muted"
                           }`}
                         >
                           {OUTCOME_LABELS[result.actual_outcome] ??

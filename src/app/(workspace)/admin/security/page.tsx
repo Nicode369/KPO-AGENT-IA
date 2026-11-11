@@ -97,7 +97,7 @@ export default async function AdminSecurityPage() {
 }
 
 function SecurityEventItem({ event }: { event: SecurityEvent }) {
-  const tone = OUTCOME_TONES[event.outcome] ?? "admin-tag-error";
+  const tone = OUTCOME_TONES[event.outcome] ?? "outcome-tag-error";
   const label = OUTCOME_LABELS[event.outcome] ?? event.outcome;
 
   return (

@@ -103,7 +103,7 @@ export default async function AdminReportsPage() {
                       <td>
                         <span
                           className={`admin-tag ${
-                            OUTCOME_TONES[outcome] ?? "admin-tag-muted"
+                            OUTCOME_TONES[outcome] ?? "outcome-tag-muted"
                           }`}
                         >
                           {OUTCOME_LABELS[outcome] ?? outcome}

@@ -9,6 +9,7 @@ import { demoCopy } from "@/lib/demo/variants";
 import { loadQuestionSuggestions } from "@/lib/demo/question-suggestions";
 import { getSuperadminGroupContext } from "@/lib/auth/group-context";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
+import { getKnowledgeBaseDocumentCount } from "@/lib/documents/retrieval";
 
 import { setActiveGroupAction } from "./actions";
 
@@ -46,6 +47,17 @@ export default async function AppHomePage({
   }
 
   const groupNames = new Map(groups.map((group) => [group.id, group.name]));
+  const knowledgeBaseLabel =
+    profile.is_superadmin && activeGroup
+      ? `Base ${activeGroup.name}`
+      : groups.length === 1
+        ? `Base ${groups[0].name}`
+        : "Base de conocimiento";
+  const documentCount = await getKnowledgeBaseDocumentCount(
+    supabase,
+    groupIds,
+    { global: profile.is_superadmin },
+  );
   const showAdmin =
     profile.is_superadmin ||
     memberships.some((membership) => membership.role === "group_admin");
@@ -83,6 +95,17 @@ export default async function AppHomePage({
               ? activeGroup?.name ?? "Sin grupo"
               : "Por grupo"}
           </strong>
+        </div>
+        <div>
+          <span>
+            {profile.is_superadmin
+              ? "Documentos globales"
+              : "Documentos del grupo"}
+          </span>
+          <strong>{documentCount.ok ? documentCount.count : "—"}</strong>
+          <small>
+            {profile.is_superadmin ? "Todos los grupos" : "Publicados"}
+          </small>
         </div>
       </section>
 
@@ -151,6 +174,7 @@ export default async function AppHomePage({
       <AgentConsole
         suggestionGroups={suggestionGroups}
         intro={demo?.intro}
+        knowledgeBaseLabel={knowledgeBaseLabel}
       />
 
       {showAdmin ? (

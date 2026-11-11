@@ -50,8 +50,21 @@ test.describe("public demo", () => {
       await expect(page).toHaveURL(/\/app\/history/);
       await expect(page.getByRole("heading", { name: "Historial compartido" })).toBeVisible();
       await expect(page.getByText(/No escribas datos personales/).first()).toBeVisible();
-      await expect(page.getByText("Bloqueada", { exact: true })).toHaveCount(0);
-      await expect(page.getByText("Rechazada", { exact: true })).toHaveCount(0);
+      const filters = page.getByRole("navigation", { name: "Filtrar por categoría" });
+      await expect(filters).toBeVisible();
+      await expect(filters.getByRole("link")).toHaveCount(7);
+      await expect(filters.getByRole("link", { name: "Todas" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      await expect(filters.getByRole("link", { name: "Bloqueada" })).toBeVisible();
+      await expect(filters.getByRole("link", { name: "Rechazada" })).toBeVisible();
+      await filters.getByRole("link", { name: "Bloqueada" }).click();
+      await expect(page).toHaveURL(/outcome=blocked/);
+      await expect(filters.getByRole("link", { name: "Bloqueada" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
       await expect(page.getByText(/100-000015/)).toHaveCount(0);
     });
   });
@@ -72,11 +85,19 @@ test.describe("public demo", () => {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       await expect(page.getByText("Preguntas sugeridas")).toBeVisible();
       await expect(page.getByRole("button", { name: /Qué NIA aplica/ })).toBeVisible();
+      const groupDocuments = page.locator(".workspace-status > div", {
+        hasText: "Documentos del grupo",
+      });
+      await expect(groupDocuments).toBeVisible();
+      await expect(groupDocuments.locator("strong")).toHaveText(/^\d+$/);
 
       await page.goto("/app/history");
       await expect(page).toHaveURL(/\/app\/history/);
       await expect(page.getByRole("heading", { name: "Historial compartido" })).toBeVisible();
       await expect(page.getByText(/No escribas datos personales/).first()).toBeVisible();
+      await expect(
+        page.getByRole("navigation", { name: "Filtrar por categoría" }),
+      ).toBeVisible();
       await expect(page.getByText(/POT municipal/)).toHaveCount(0);
     });
 
@@ -88,7 +109,8 @@ test.describe("public demo", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            answer: "Respuesta de prueba con una fuente.",
+            answer:
+              "**Obligación:** validar la vigencia antes de aplicar [1].\n\n- Documentar la evidencia.\n- Escalar al responsable.",
             abstained: false,
             outcome: "answered",
             outcomeReason: null,
@@ -121,7 +143,11 @@ test.describe("public demo", () => {
 
       const suggestion = page.getByRole("button", { name: /Qué NIA aplica/ });
       await suggestion.click();
-      await expect(page.getByText("Respuesta de prueba con una fuente.")).toBeVisible();
+      await expect(page.getByText("Base KPO", { exact: true })).toBeVisible();
+      await expect(page.locator(".rich-answer strong")).toHaveText("Obligación:");
+      await expect(page.getByText("Documentar la evidencia.")).toBeVisible();
+      await expect(page.getByLabel("Ir a la fuente 1")).toBeVisible();
+      await expect(page.getByText(/\*\*Obligación/)).toHaveCount(0);
       await expect(page.getByText("Preguntas sugeridas")).toBeVisible();
       await expect(suggestion).toBeVisible();
     });

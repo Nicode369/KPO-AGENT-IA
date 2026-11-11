@@ -1,6 +1,6 @@
 import type { AgentSource, RetrievedChunk } from "./types";
 
-export const PROMPT_VERSION = "rag-es-v1";
+export const PROMPT_VERSION = "rag-es-v2";
 export const ABSTENTION_TEXT =
   "No tengo evidencia suficiente en los documentos publicados para responder.";
 export const OUT_OF_SCOPE_TEXT =
@@ -62,6 +62,8 @@ export function buildMessages(question: string, sources: AgentSource[]) {
       content: [
         "Eres un asistente de conocimiento normativo para una organización.",
         "Responde en español, de forma directa y verificable.",
+        "Empieza directamente con el contenido, sin prefijos como 'Respuesta:' o 'Answer:'.",
+        "Usa párrafos cortos y listas simples cuando haya varios requisitos. Puedes usar negritas para conceptos clave, pero no encabezados, tablas, HTML ni bloques de código.",
         "Usa exclusivamente la información de los fragmentos entregados.",
         "Cita cada afirmación con el número del fragmento entre corchetes, por ejemplo [1] o [2].",
         "No uses conocimiento externo, no supongas normas ni fechas y no inventes citas.",

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 
 import { AuditSubnav } from "@/components/audit-subnav";
 import { HistoryIcon } from "@/components/icons";
+import { RichAnswer } from "@/components/rich-answer";
 import {
   AUDIT_OUTCOMES,
   AUDIT_PAGE_SIZE,
@@ -298,7 +299,7 @@ function AuditEventItem({
   groupNames: Map<string, string>;
   sources: AuditSource[];
 }) {
-  const tone = OUTCOME_TONES[event.outcome] ?? "admin-tag-muted";
+  const tone = OUTCOME_TONES[event.outcome] ?? "outcome-tag-muted";
   const label = OUTCOME_LABELS[event.outcome] ?? event.outcome;
   const scope = event.group_ids.length
     ? event.group_ids.map((id) => groupNames.get(id) ?? "Grupo").join(", ")
@@ -314,7 +315,7 @@ function AuditEventItem({
       <h2>{event.question}</h2>
 
       {event.answer ? (
-        <p className="history-answer">{event.answer}</p>
+        <RichAnswer className="history-answer" answer={event.answer} />
       ) : (
         <p className="admin-muted">No se generó una respuesta para esta consulta.</p>
       )}

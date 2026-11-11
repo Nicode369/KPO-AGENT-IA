@@ -1,3 +1,12 @@
+export const HISTORY_OUTCOMES = [
+  "answered",
+  "insufficient_evidence",
+  "out_of_scope",
+  "rejected",
+  "blocked",
+  "error",
+] as const;
+
 export const OUTCOME_LABELS: Record<string, string> = {
   answered: "Respondida",
   rejected: "Rechazada",
@@ -8,12 +17,12 @@ export const OUTCOME_LABELS: Record<string, string> = {
 };
 
 export const OUTCOME_TONES: Record<string, string> = {
-  answered: "admin-tag-ok",
-  rejected: "admin-tag-error",
-  blocked: "admin-tag-error",
-  insufficient_evidence: "admin-tag-warn",
-  out_of_scope: "admin-tag-warn",
-  error: "admin-tag-error",
+  answered: "outcome-tag-answered",
+  insufficient_evidence: "outcome-tag-insufficient",
+  out_of_scope: "outcome-tag-out-of-scope",
+  rejected: "outcome-tag-rejected",
+  blocked: "outcome-tag-blocked",
+  error: "outcome-tag-error",
 };
 
 export const REASON_LABELS: Record<string, string> = {

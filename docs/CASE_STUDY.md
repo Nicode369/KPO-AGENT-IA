@@ -30,7 +30,7 @@ Los PDFs se validan con firma `%PDF-`, tamaño máximo, páginas, capa de texto 
 1. El visitante llega a `/`, `/login` o `/caso-de-estudio` y pulsa **DEMO CLIMA** o **DEMO KPO**.
 2. `startDemo` cierra cualquier sesión previa, inicia sesión con la cuenta de la variante y valida perfil, grupo y membresía.
 3. La sesión se marca como demo por el correo del perfil, no por un parámetro de URL.
-4. `/app` muestra el banner de demo, un panel de preguntas por grupo y un historial compartido filtrado por grupo; limita las consultas a 60/minuto.
+4. `/app` muestra el banner de demo, un panel de preguntas por grupo y un historial compartido filtrado por grupo, con filtros por categoría y etiquetas de color para todos los resultados; limita las consultas a 60/minuto.
 5. Cada respuesta conserva fuentes numeradas, citas versionadas, abstención sin evidencia, RLS y auditoría.
 6. `/caso-de-estudio` explica el caso CLIMA y `/caso-de-estudio/kpo` el caso de auditoría y cumplimiento.
 

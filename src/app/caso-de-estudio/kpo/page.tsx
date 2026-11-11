@@ -361,8 +361,9 @@ export default function KpoCaseStudyPage() {
           <div className="case-eval">
             <p>
               La demo permite probar preguntas respondibles y preguntas sin evidencia.
-              El historial compartido muestra las respuestas de la comunidad y oculta
-              solicitudes bloqueadas, rechazadas y errores.
+              El historial compartido muestra todas las categorías de la comunidad,
+              incluidas solicitudes bloqueadas, rechazadas y errores; cada categoría
+              tiene un color y puede filtrarse desde el propio historial.
             </p>
             <p className="case-footnote">
               Los resultados no se presentan como asesoría legal ni como una auditoría

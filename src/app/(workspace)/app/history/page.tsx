@@ -2,7 +2,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { HistoryIcon } from "@/components/icons";
-import { OUTCOME_LABELS, OUTCOME_TONES, REASON_LABELS } from "@/lib/agent/labels";
+import { RichAnswer } from "@/components/rich-answer";
+import {
+  HISTORY_OUTCOMES,
+  OUTCOME_LABELS,
+  OUTCOME_TONES,
+  REASON_LABELS,
+} from "@/lib/agent/labels";
 import { demoGroupSlug, demoVariantForEmail } from "@/lib/auth/demo";
 import { demoCopy } from "@/lib/demo/variants";
 import { requireWorkspaceUser } from "@/lib/auth/workspace";
@@ -25,6 +31,8 @@ type HistoryQuery = {
   created_at: string;
 };
 
+type SearchParams = Promise<{ outcome?: string }>;
+
 type HistorySource = {
   query_id: string;
   rank: number;
@@ -33,8 +41,15 @@ type HistorySource = {
   document_version: number | null;
 };
 
-export default async function HistoryPage() {
+export default async function HistoryPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   await connection();
+  const params = await searchParams;
+  const selectedOutcome =
+    HISTORY_OUTCOMES.find((outcome) => outcome === params.outcome) ?? "";
   const { supabase, profile, memberships } = await requireWorkspaceUser();
   const demoVariant = demoVariantForEmail(profile.email);
   const demo = demoCopy(demoVariant);
@@ -58,9 +73,10 @@ export default async function HistoryPage() {
     .limit(50);
 
   if (demoVariant && demoGroupId) {
-    request = request
-      .contains("group_ids", [demoGroupId])
-      .in("outcome", ["answered", "insufficient_evidence", "out_of_scope"]);
+    request = request.contains("group_ids", [demoGroupId]);
+  }
+  if (selectedOutcome) {
+    request = request.eq("outcome", selectedOutcome);
   }
 
   const { data, error } =
@@ -91,8 +107,8 @@ export default async function HistoryPage() {
           <h1>{demo ? "Historial compartido" : "Historial de consultas"}</h1>
           <p className="workspace-lead">
             {demo
-              ? `Consultas realizadas por todas las personas que exploran ${demo.library}. Se ocultan solicitudes bloqueadas, rechazadas y errores. No escribas datos personales.`
-              : "Cada consulta registra su resultado, las fuentes recuperadas y el modelo utilizado. El historial es personal y respeta el aislamiento entre grupos."}
+              ? `Consultas realizadas por todas las personas que exploran ${demo.library}. Se muestran todas las categorías, incluidas las bloqueadas, rechazadas y con error. Usa los filtros para revisarlas. No escribas datos personales.`
+              : "Cada consulta registra su pregunta, respuesta, resultado y fuentes. Usa los filtros por categoría para revisar el historial personal de tus grupos."}
           </p>
         </div>
         <Link className="button button-secondary" href="/app">
@@ -110,17 +126,52 @@ export default async function HistoryPage() {
         </section>
       ) : null}
 
+      {!error ? (
+        <nav className="history-filters" aria-label="Filtrar por categoría">
+          {[
+            { value: "", label: "Todas", tone: "outcome-tag-muted" },
+            ...HISTORY_OUTCOMES.map((outcome) => ({
+              value: outcome,
+              label: OUTCOME_LABELS[outcome] ?? outcome,
+              tone: OUTCOME_TONES[outcome] ?? "outcome-tag-muted",
+            })),
+          ].map((option) => (
+            <Link
+              key={option.value || "all"}
+              href={
+                option.value
+                  ? `/app/history?outcome=${encodeURIComponent(option.value)}`
+                  : "/app/history"
+              }
+              className={`history-filter ${option.tone}`}
+              aria-current={selectedOutcome === option.value ? "page" : undefined}
+            >
+              {option.label}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+
       {!error && !queries.length ? (
         <section className="history-empty">
           <HistoryIcon size={28} />
-          <h2>Todavía no hay consultas registradas</h2>
+          <h2>
+            {selectedOutcome
+              ? `No hay consultas en "${OUTCOME_LABELS[selectedOutcome]}"`
+              : "Todavía no hay consultas registradas"}
+          </h2>
           <p>
-            {demo
-              ? "Haz una pregunta en esta demo y aparecerá aquí para las próximas personas que la visiten."
-              : "Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes."}
+            {selectedOutcome
+              ? "Prueba otra categoría o limpia el filtro para ver todo el historial."
+              : demo
+                ? "Haz una pregunta en esta demo y aparecerá aquí para las próximas personas que la visiten."
+                : "Haz una pregunta al asistente y aparecerá aquí con su resultado y sus fuentes."}
           </p>
-          <Link className="button button-secondary" href="/app">
-            Ir al asistente
+          <Link
+            className="button button-secondary"
+            href={selectedOutcome ? "/app/history" : "/app"}
+          >
+            {selectedOutcome ? "Ver todas las categorías" : "Ir al asistente"}
           </Link>
         </section>
       ) : null}
@@ -129,7 +180,7 @@ export default async function HistoryPage() {
         <div className="history-list">
           {queries.map((query) => {
             const sources = sourcesByQuery.get(query.id) ?? [];
-            const tone = OUTCOME_TONES[query.outcome] ?? "admin-tag-muted";
+            const tone = OUTCOME_TONES[query.outcome] ?? "outcome-tag-muted";
             const label = OUTCOME_LABELS[query.outcome] ?? query.outcome;
 
             return (
@@ -144,10 +195,12 @@ export default async function HistoryPage() {
                 <h2>{query.question}</h2>
 
                 {query.answer ? (
-                  <p className="history-answer">{query.answer}</p>
+                  <RichAnswer className="history-answer" answer={query.answer} />
                 ) : (
                   <p className="admin-muted">
-                    No se generó una respuesta para esta consulta.
+                    {query.outcome === "error"
+                      ? "La consulta falló antes de generar una respuesta."
+                      : "No se registró una respuesta para esta consulta."}
                   </p>
                 )}
 
